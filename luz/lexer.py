@@ -14,6 +14,8 @@ class Lexer:
         'and': TokenType.AND,
         'or': TokenType.OR,
         'not': TokenType.NOT,
+        'function': TokenType.FUNCTION,
+        'return': TokenType.RETURN,
     }
 
     def __init__(self, text):

@@ -56,6 +56,16 @@ class ForNode:
         self.end_value_node = end_value_node
         self.block = block
 
+class FuncDefNode:
+    def __init__(self, name_token, arg_tokens, block):
+        self.name_token = name_token
+        self.arg_tokens = arg_tokens
+        self.block = block
+
+class ReturnNode:
+    def __init__(self, expression_node):
+        self.expression_node = expression_node
+
 class CallNode:
     def __init__(self, func_name_token, arguments):
         self.func_name_token = func_name_token
@@ -92,6 +102,16 @@ class Parser:
         if self.current_token.type == TokenType.FOR:
             return self.for_expr()
         
+        if self.current_token.type == TokenType.FUNCTION:
+            return self.func_def()
+        
+        if self.current_token.type == TokenType.RETURN:
+            self.advance()
+            expr = None
+            if self.current_token.type not in (TokenType.EOF, TokenType.RBRACE):
+                expr = self.expr()
+            return ReturnNode(expr)
+        
         if self.current_token.type == TokenType.IDENTIFIER:
             # Lookahead for assignment
             next_token = self.tokens[self.pos + 1] if self.pos + 1 < len(self.tokens) else None
@@ -103,6 +123,44 @@ class Parser:
                 return VarAssignNode(var_name, expr)
         
         return self.expr()
+
+    def func_def(self):
+        self.advance() # function
+        if self.current_token.type != TokenType.IDENTIFIER:
+            raise Exception("Esperado nombre de función")
+        name_token = self.current_token
+        self.advance()
+        
+        if self.current_token.type != TokenType.LPAREN:
+            raise Exception("Esperado '('")
+        self.advance()
+        
+        arg_tokens = []
+        if self.current_token.type == TokenType.IDENTIFIER:
+            arg_tokens.append(self.current_token)
+            self.advance()
+            while self.current_token.type == TokenType.COMMA:
+                self.advance()
+                if self.current_token.type != TokenType.IDENTIFIER:
+                    raise Exception("Esperado nombre de argumento")
+                arg_tokens.append(self.current_token)
+                self.advance()
+        
+        if self.current_token.type != TokenType.RPAREN:
+            raise Exception("Esperado ')'")
+        self.advance()
+        
+        if self.current_token.type != TokenType.LBRACE:
+            raise Exception("Esperado '{'")
+        self.advance()
+        
+        block = self.statements()
+        
+        if self.current_token.type != TokenType.RBRACE:
+            raise Exception("Esperado '}'")
+        self.advance()
+        
+        return FuncDefNode(name_token, arg_tokens, block)
 
     def if_expr(self):
         cases = []

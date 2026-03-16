@@ -1,12 +1,70 @@
 from .tokens import TokenType
 
+class ReturnException(Exception):
+    def __init__(self, value):
+        self.value = value
+
+class Environment:
+    def __init__(self, parent=None):
+        self.records = {}
+        self.parent = parent
+
+    def define(self, name, value):
+        self.records[name] = value
+        return value
+
+    def lookup(self, name):
+        if name in self.records:
+            return self.records[name]
+        if self.parent:
+            return self.parent.lookup(name)
+        raise Exception(f"Variable '{name}' no definida")
+
+    def assign(self, name, value):
+        if name in self.records:
+            self.records[name] = value
+            return value
+        if self.parent:
+            return self.parent.assign(name, value)
+        # Si no existe en ningún ámbito superior, la creamos en el actual (comportamiento por defecto)
+        self.records[name] = value
+        return value
+
+class LuzFunction:
+    def __init__(self, node, closure):
+        self.node = node
+        self.closure = closure
+
+    def __call__(self, interpreter, arguments):
+        env = Environment(self.closure)
+        for i in range(len(self.node.arg_tokens)):
+            env.define(self.node.arg_tokens[i].value, arguments[i])
+        
+        try:
+            interpreter.execute_block(self.node.block, env)
+        except ReturnException as e:
+            return e.value
+        return None
+
 class Interpreter:
     def __init__(self):
-        self.symbol_table = {}
+        self.global_env = Environment()
+        self.current_env = self.global_env
         self.builtins = {
             'write': self.builtin_write,
             'listen': self.builtin_listen
         }
+
+    def execute_block(self, block, env):
+        previous_env = self.current_env
+        self.current_env = env
+        try:
+            result = None
+            for statement in block:
+                result = self.visit(statement)
+            return result
+        finally:
+            self.current_env = previous_env
 
     def visit(self, node):
         if isinstance(node, list):
@@ -40,14 +98,12 @@ class Interpreter:
     def visit_VarAssignNode(self, node):
         var_name = node.var_name_token.value
         value = self.visit(node.value_node)
-        self.symbol_table[var_name] = value
+        self.current_env.assign(var_name, value)
         return value
 
     def visit_VarAccessNode(self, node):
         var_name = node.token.value
-        if var_name not in self.symbol_table:
-            raise Exception(f"Variable '{var_name}' no definida")
-        return self.symbol_table[var_name]
+        return self.current_env.lookup(var_name)
 
     def visit_BinOpNode(self, node):
         left = self.visit(node.left_node)
@@ -109,20 +165,50 @@ class Interpreter:
         end_value = self.visit(node.end_value_node)
 
         i = start_value
-        while i <= end_value:
-            self.symbol_table[var_name] = i
-            self.visit(node.block)
-            i += 1
+        # Creamos un ámbito local para el bucle for
+        previous_env = self.current_env
+        self.current_env = Environment(previous_env)
+        try:
+            while i <= end_value:
+                self.current_env.define(var_name, i)
+                self.visit(node.block)
+                i += 1
+        finally:
+            self.current_env = previous_env
         return None
+
+    def visit_FuncDefNode(self, node):
+        func_name = node.name_token.value
+        function = LuzFunction(node, self.current_env)
+        self.current_env.define(func_name, function)
+        return None
+
+    def visit_ReturnNode(self, node):
+        value = None
+        if node.expression_node:
+            value = self.visit(node.expression_node)
+        raise ReturnException(value)
 
     def visit_CallNode(self, node):
         func_name = node.func_name_token.value
-        args = [self.visit(arg) for arg in node.arguments]
+        arguments = [self.visit(arg) for arg in node.arguments]
 
         if func_name in self.builtins:
-            return self.builtins[func_name](*args)
+            return self.builtins[func_name](*arguments)
         
-        raise Exception(f"Función '{func_name}' no definida")
+        try:
+            function = self.current_env.lookup(func_name)
+            if not isinstance(function, LuzFunction):
+                raise Exception(f"'{func_name}' no es una función")
+            
+            if len(arguments) != len(function.node.arg_tokens):
+                raise Exception(f"Esperados {len(function.node.arg_tokens)} argumentos, recibidos {len(arguments)}")
+            
+            return function(self, arguments)
+        except Exception as e:
+            if "no definida" in str(e):
+                raise Exception(f"Función '{func_name}' no definida")
+            raise e
 
     def builtin_write(self, *args):
         print(*args)
