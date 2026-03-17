@@ -29,6 +29,9 @@ class TokenType(Enum):
     NOT = auto()
     FUNCTION = auto()
     RETURN = auto()
+    ATTEMPT = auto()
+    RESCUE = auto()
+    ALERT = auto()
     STRING = auto()
     COMMA = auto()       # ,
     COLON = auto()       # :

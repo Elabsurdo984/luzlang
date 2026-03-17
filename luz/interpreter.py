@@ -1,8 +1,22 @@
 from .tokens import TokenType
 
-class ReturnException(Exception):
+# Excepciones personalizadas de Luz
+class LuzError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
+class ReturnException(LuzError):
     def __init__(self, value):
         self.value = value
+        super().__init__("Return")
+
+class MathFault(LuzError): pass
+class LogicFault(LuzError): pass
+class AccessFault(LuzError): pass
+class SyntaxFault(LuzError): pass
+class SystemFault(LuzError): pass
+class UserFault(LuzError): pass # Para 'alert'
 
 class Environment:
     def __init__(self, parent=None):
@@ -18,7 +32,7 @@ class Environment:
             return self.records[name]
         if self.parent:
             return self.parent.lookup(name)
-        raise Exception(f"Variable '{name}' no definida")
+        raise AccessFault(f"Variable '{name}' no definida")
 
     def assign(self, name, value):
         if name in self.records:
@@ -84,7 +98,7 @@ class Interpreter:
         return method(node)
 
     def no_visit_method(self, node):
-        raise Exception(f'No visit_{type(node).__name__} method defined')
+        raise SystemFault(f'No visit_{type(node).__name__} method defined')
 
     def visit_NumberNode(self, node):
         return node.token.value
@@ -114,14 +128,16 @@ class Interpreter:
             try:
                 return base[int(index)]
             except IndexError:
-                raise Exception(f"Índice {index} fuera de rango")
+                raise AccessFault(f"Índice {index} fuera de rango")
+            except ValueError:
+                raise LogicFault(f"Índice de lista debe ser un entero")
         elif isinstance(base, dict):
             try:
                 return base[index]
             except KeyError:
-                raise Exception(f"Clave '{index}' no encontrada en el diccionario")
+                raise AccessFault(f"Clave '{index}' no encontrada en el diccionario")
         else:
-            raise Exception("El objeto no soporta indexación")
+            raise LogicFault("El objeto no soporta indexación")
 
     def visit_IndexAssignNode(self, node):
         base = self.visit(node.base_node)
@@ -133,12 +149,48 @@ class Interpreter:
                 base[int(index)] = value
                 return value
             except IndexError:
-                raise Exception(f"Índice {index} fuera de rango")
+                raise AccessFault(f"Índice {index} fuera de rango")
+            except ValueError:
+                raise LogicFault(f"Índice de lista debe ser un entero")
         elif isinstance(base, dict):
             base[index] = value
             return value
         else:
-            raise Exception("El objeto no soporta asignación por índice")
+            raise LogicFault("El objeto no soporta asignación por índice")
+
+    def visit_AttemptRescueNode(self, node):
+        try:
+            return self.visit(node.try_block)
+        except LuzError as e:
+            # Si no es ReturnException (que no deberia ser capturada aqui normalmente si esta dentro de una funcion que debe retornar)
+            # Pero attempt puede envolver returns. Si es return, lo dejamos pasar.
+            if isinstance(e, ReturnException):
+                raise e
+            
+            # Crear un nuevo scope para el bloque rescue
+            previous_env = self.current_env
+            rescue_env = Environment(previous_env)
+            self.current_env = rescue_env
+            try:
+                # Definir la variable de error
+                self.current_env.define(node.error_var_token.value, e.message)
+                return self.visit(node.catch_block)
+            finally:
+                self.current_env = previous_env
+        except Exception as e:
+            # Capturar errores inesperados de Python como SystemFault
+            previous_env = self.current_env
+            rescue_env = Environment(previous_env)
+            self.current_env = rescue_env
+            try:
+                self.current_env.define(node.error_var_token.value, f"SystemFault: {str(e)}")
+                return self.visit(node.catch_block)
+            finally:
+                self.current_env = previous_env
+
+    def visit_AlertNode(self, node):
+        msg = self.visit(node.expression_node)
+        raise UserFault(str(msg))
 
     def visit_UnaryOpNode(self, node):
         res = self.visit(node.node)
@@ -164,19 +216,19 @@ class Interpreter:
             return left + right
         elif node.op_token.type == TokenType.MINUS:
             if isinstance(left, str) or isinstance(right, str):
-                raise Exception("Operación '-' no soportada para strings")
+                raise LogicFault("Operación '-' no soportada para strings")
             return left - right
         elif node.op_token.type == TokenType.MUL:
             if isinstance(left, str) and isinstance(right, float):
                 return left * int(right)
             if isinstance(left, float) or isinstance(right, float):
                  return left * right
-            raise Exception("Operación '*' solo soportada entre números o string y número")
+            raise LogicFault("Operación '*' solo soportada entre números o string y número")
         elif node.op_token.type == TokenType.DIV:
             if isinstance(left, str) or isinstance(right, str):
-                raise Exception("Operación '/' no soportada para strings")
+                raise LogicFault("Operación '/' no soportada para strings")
             if right == 0:
-                raise Exception("Error: División por cero")
+                raise MathFault("División por cero")
             return left / right
         elif node.op_token.type == TokenType.EE:
             return left == right
@@ -185,19 +237,19 @@ class Interpreter:
         elif node.op_token.type == TokenType.LT:
             if isinstance(left, (int, float)) and isinstance(right, (int, float)):
                 return left < right
-            raise Exception("Comparación '<' solo soportada entre números")
+            raise LogicFault("Comparación '<' solo soportada entre números")
         elif node.op_token.type == TokenType.GT:
             if isinstance(left, (int, float)) and isinstance(right, (int, float)):
                 return left > right
-            raise Exception("Comparación '>' solo soportada entre números")
+            raise LogicFault("Comparación '>' solo soportada entre números")
         elif node.op_token.type == TokenType.LTE:
             if isinstance(left, (int, float)) and isinstance(right, (int, float)):
                 return left <= right
-            raise Exception("Comparación '<=' solo soportada entre números")
+            raise LogicFault("Comparación '<=' solo soportada entre números")
         elif node.op_token.type == TokenType.GTE:
             if isinstance(left, (int, float)) and isinstance(right, (int, float)):
                 return left >= right
-            raise Exception("Comparación '>=' solo soportada entre números")
+            raise LogicFault("Comparación '>=' solo soportada entre números")
         elif node.op_token.type == TokenType.AND:
             return left and right
         elif node.op_token.type == TokenType.OR:
@@ -258,16 +310,18 @@ class Interpreter:
         try:
             function = self.current_env.lookup(func_name)
             if not isinstance(function, LuzFunction):
-                raise Exception(f"'{func_name}' no es una función")
+                raise LogicFault(f"'{func_name}' no es una función")
             
             if len(arguments) != len(function.node.arg_tokens):
-                raise Exception(f"Esperados {len(function.node.arg_tokens)} argumentos, recibidos {len(arguments)}")
+                raise LogicFault(f"Esperados {len(function.node.arg_tokens)} argumentos, recibidos {len(arguments)}")
             
             return function(self, arguments)
+        except LuzError as e:
+            raise e
         except Exception as e:
             if "no definida" in str(e):
-                raise Exception(f"Función '{func_name}' no definida")
-            raise e
+                raise AccessFault(f"Función '{func_name}' no definida")
+            raise SystemFault(str(e))
 
     def builtin_write(self, *args):
         print(*args)
@@ -284,35 +338,35 @@ class Interpreter:
         try:
             return float(len(obj))
         except:
-            raise Exception("El objeto no tiene longitud")
+            raise LogicFault("El objeto no tiene longitud")
 
     def builtin_append(self, list_obj, element):
         if not isinstance(list_obj, list):
-            raise Exception("append() requiere una lista como primer argumento")
+            raise LogicFault("append() requiere una lista como primer argumento")
         list_obj.append(element)
         return None
 
     def builtin_pop(self, list_obj, index=None):
         if not isinstance(list_obj, list):
-            raise Exception("pop() requiere una lista como primer argumento")
+            raise LogicFault("pop() requiere una lista como primer argumento")
         try:
             if index is None:
                 return list_obj.pop()
             return list_obj.pop(int(index))
         except IndexError:
-            raise Exception("Índice fuera de rango en pop()")
+            raise AccessFault("Índice fuera de rango en pop()")
 
     def builtin_keys(self, dict_obj):
         if not isinstance(dict_obj, dict):
-            raise Exception("keys() requiere un diccionario")
+            raise LogicFault("keys() requiere un diccionario")
         return list(dict_obj.keys())
 
     def builtin_values(self, dict_obj):
         if not isinstance(dict_obj, dict):
-            raise Exception("values() requiere un diccionario")
+            raise LogicFault("values() requiere un diccionario")
         return list(dict_obj.values())
 
     def builtin_remove(self, dict_obj, key):
         if not isinstance(dict_obj, dict):
-            raise Exception("remove() requiere un diccionario")
+            raise LogicFault("remove() requiere un diccionario")
         return dict_obj.pop(key, None)

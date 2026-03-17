@@ -125,6 +125,37 @@ def test_dicts():
     assert "nombre" in ks and "edad" in ks and "ciudad" in ks
     print("Diccionarios: OK")
 
+def test_errors():
+    print("Probando manejo de errores...")
+    interpreter = Interpreter()
+    
+    # attempt / rescue con MathFault
+    code = '''
+    msg = ""
+    attempt {
+        x = 10 / 0
+    } rescue (error) {
+        msg = error
+    }
+    '''
+    interpreter.visit(Parser(Lexer(code).get_tokens()).parse())
+    msg = interpreter.global_env.lookup('msg')
+    assert "División por cero" in str(msg)
+    
+    # alert
+    code2 = '''
+    capturado = ""
+    attempt {
+        alert "Mi error personalizado"
+    } rescue (e) {
+        capturado = e
+    }
+    '''
+    interpreter.visit(Parser(Lexer(code2).get_tokens()).parse())
+    capturado = interpreter.global_env.lookup('capturado')
+    assert "Mi error personalizado" in str(capturado)
+    print("Manejo de errores: OK")
+
 def run_all():
     print("=== INICIANDO SUITE DE PRUEBAS DE LUZ ===\n")
     try:
@@ -135,6 +166,7 @@ def run_all():
         test_functions()
         test_lists()
         test_dicts()
+        test_errors()
         print("\n=== ¡TODAS LAS PRUEBAS PASARON CON ÉXITO! ===")
     except Exception as e:
         print(f"\nERROR EN LAS PRUEBAS: {e}")

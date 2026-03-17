@@ -89,6 +89,16 @@ class ReturnNode:
     def __init__(self, expression_node):
         self.expression_node = expression_node
 
+class AttemptRescueNode:
+    def __init__(self, try_block, error_var_token, catch_block):
+        self.try_block = try_block
+        self.error_var_token = error_var_token
+        self.catch_block = catch_block
+
+class AlertNode:
+    def __init__(self, expression_node):
+        self.expression_node = expression_node
+
 class CallNode:
     def __init__(self, func_name_token, arguments):
         self.func_name_token = func_name_token
@@ -135,6 +145,14 @@ class Parser:
                 expr = self.expr()
             return ReturnNode(expr)
         
+        if self.current_token.type == TokenType.ATTEMPT:
+            return self.attempt_rescue_expr()
+        
+        if self.current_token.type == TokenType.ALERT:
+            self.advance()
+            expr = self.expr()
+            return AlertNode(expr)
+        
         if self.current_token.type == TokenType.IDENTIFIER:
             # Lookahead for assignment
             next_token = self.tokens[self.pos + 1] if self.pos + 1 < len(self.tokens) else None
@@ -154,6 +172,47 @@ class Parser:
             return IndexAssignNode(node.base_node, node.index_node, value)
             
         return node
+
+    def attempt_rescue_expr(self):
+        self.advance() # attempt
+        if self.current_token.type != TokenType.LBRACE:
+            raise Exception("Esperado '{' después de attempt")
+        self.advance()
+        
+        try_block = self.statements()
+        
+        if self.current_token.type != TokenType.RBRACE:
+            raise Exception("Esperado '}' después del bloque attempt")
+        self.advance()
+        
+        if self.current_token.type != TokenType.RESCUE:
+            raise Exception("Esperado 'rescue' después del bloque attempt")
+        self.advance()
+        
+        if self.current_token.type != TokenType.LPAREN:
+            raise Exception("Esperado '(' después de rescue")
+        self.advance()
+        
+        if self.current_token.type != TokenType.IDENTIFIER:
+            raise Exception("Esperado nombre de variable para el error en rescue")
+        error_var = self.current_token
+        self.advance()
+        
+        if self.current_token.type != TokenType.RPAREN:
+            raise Exception("Esperado ')'")
+        self.advance()
+        
+        if self.current_token.type != TokenType.LBRACE:
+            raise Exception("Esperado '{' para el bloque rescue")
+        self.advance()
+        
+        catch_block = self.statements()
+        
+        if self.current_token.type != TokenType.RBRACE:
+            raise Exception("Esperado '}' después del bloque rescue")
+        self.advance()
+        
+        return AttemptRescueNode(try_block, error_var, catch_block)
 
     def func_def(self):
         self.advance() # function

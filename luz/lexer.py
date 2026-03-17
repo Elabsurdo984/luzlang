@@ -16,6 +16,9 @@ class Lexer:
         'not': TokenType.NOT,
         'function': TokenType.FUNCTION,
         'return': TokenType.RETURN,
+        'attempt': TokenType.ATTEMPT,
+        'rescue': TokenType.RESCUE,
+        'alert': TokenType.ALERT,
     }
 
     def __init__(self, text):
