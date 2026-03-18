@@ -17,6 +17,7 @@ class Lexer:
         'not': TokenType.NOT,
         'function': TokenType.FUNCTION,
         'return': TokenType.RETURN,
+        'import': TokenType.IMPORT,
         'attempt': TokenType.ATTEMPT,
         'rescue': TokenType.RESCUE,
         'alert': TokenType.ALERT,

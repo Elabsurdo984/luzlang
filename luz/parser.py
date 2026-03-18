@@ -93,6 +93,10 @@ class ReturnNode:
     def __init__(self, expression_node):
         self.expression_node = expression_node
 
+class ImportNode:
+    def __init__(self, file_path_token):
+        self.file_path_token = file_path_token
+
 class AttemptRescueNode:
     def __init__(self, try_block, error_var_token, catch_block):
         self.try_block = try_block
@@ -156,6 +160,14 @@ class Parser:
                 expr = self.expr()
             return ReturnNode(expr)
         
+        if self.current_token.type == TokenType.IMPORT:
+            self.advance()
+            if self.current_token.type != TokenType.STRING:
+                raise UnexpectedTokenFault(f"Expected module path string after 'import', received {self.current_token}")
+            path_token = self.current_token
+            self.advance()
+            return ImportNode(path_token)
+        
         if self.current_token.type == TokenType.ATTEMPT:
             return self.attempt_rescue_expr()
         
@@ -165,6 +177,7 @@ class Parser:
             return AlertNode(expr)
         
         if self.current_token.type == TokenType.IDENTIFIER:
+            # Lookahead for assignment
             next_token = self.tokens[self.pos + 1] if self.pos + 1 < len(self.tokens) else None
             if next_token and next_token.type == TokenType.ASSIGN:
                 var_name = self.current_token
@@ -175,6 +188,7 @@ class Parser:
 
         node = self.expr()
         
+        # Check for indexing assignment: lista[0] = 5 or dict["key"] = val
         if isinstance(node, IndexAccessNode) and self.current_token.type == TokenType.ASSIGN:
             self.advance() # =
             value = self.expr()

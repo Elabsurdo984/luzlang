@@ -1,5 +1,8 @@
 from .tokens import TokenType
 from .exceptions import *
+from .lexer import Lexer
+from .parser import Parser
+import os
 
 class Environment:
     def __init__(self, parent=None):
@@ -7,7 +10,6 @@ class Environment:
         self.parent = parent
 
     def define(self, name, value):
-        # Optional: could check for DuplicateSymbolFault here if we wanted strict definitions
         self.records[name] = value
         return value
 
@@ -24,7 +26,6 @@ class Environment:
             return value
         if self.parent:
             return self.parent.assign(name, value)
-        # Default: define in current scope if not found in any parent
         self.records[name] = value
         return value
 
@@ -51,6 +52,7 @@ class Interpreter:
     def __init__(self):
         self.global_env = Environment()
         self.current_env = self.global_env
+        self.imported_files = set()
         self.builtins = {
             'write': self.builtin_write,
             'listen': self.builtin_listen,
@@ -178,6 +180,46 @@ class Interpreter:
     def visit_AlertNode(self, node):
         msg = self.visit(node.expression_node)
         raise UserFault(str(msg))
+
+    def visit_ImportNode(self, node):
+        file_path = node.file_path_token.value
+        
+        # Absolute path resolution (simple version)
+        abs_path = os.path.abspath(file_path)
+        
+        if abs_path in self.imported_files:
+            return None
+            
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                code = f.read()
+        except FileNotFoundError:
+            raise ModuleNotFoundFault(f"Module file '{file_path}' not found")
+        except Exception as e:
+            raise ImportFault(f"Failed to read module '{file_path}': {str(e)}")
+            
+        self.imported_files.add(abs_path)
+        
+        try:
+            lexer = Lexer(code)
+            tokens = lexer.get_tokens()
+            parser = Parser(tokens)
+            ast = parser.parse()
+            
+            # Execute in global environment
+            temp_env = self.current_env
+            self.current_env = self.global_env
+            try:
+                self.visit(ast)
+            finally:
+                self.current_env = temp_env
+                
+        except LuzError as e:
+            raise ImportFault(f"Error in module '{file_path}': {str(e)}")
+        except Exception as e:
+            raise ImportFault(f"Unexpected error in module '{file_path}': {str(e)}")
+            
+        return None
 
     def visit_UnaryOpNode(self, node):
         res = self.visit(node.node)

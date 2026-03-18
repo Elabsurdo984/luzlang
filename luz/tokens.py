@@ -29,6 +29,7 @@ class TokenType(Enum):
     NOT = auto()
     FUNCTION = auto()
     RETURN = auto()
+    IMPORT = auto()
     ATTEMPT = auto()
     RESCUE = auto()
     ALERT = auto()
