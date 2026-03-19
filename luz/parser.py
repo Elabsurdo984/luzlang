@@ -1,7 +1,7 @@
 from .tokens import TokenType
 from .exceptions import (
     UnexpectedTokenFault, UnexpectedEOFault, StructureFault,
-    ParseFault, ExpressionFault, OperatorFault
+    ParseFault, ExpressionFault, OperatorFault, SyntaxFault
 )
 
 class NumberNode:
@@ -163,40 +163,52 @@ class Parser:
             return self.func_def()
         
         if self.current_token.type == TokenType.RETURN:
+            line = self.current_token.line
             self.advance()
             expr = None
             if self.current_token.type not in (TokenType.EOF, TokenType.RBRACE):
                 expr = self.expr()
-            return ReturnNode(expr)
-        
+            node = ReturnNode(expr); node.line = line
+            return node
+
         if self.current_token.type == TokenType.IMPORT:
+            line = self.current_token.line
             self.advance()
             if self.current_token.type != TokenType.STRING:
                 raise UnexpectedTokenFault(f"Expected module path string after 'import', received {self.current_token}")
             path_token = self.current_token
             self.advance()
-            return ImportNode(path_token)
-        
+            node = ImportNode(path_token); node.line = line
+            return node
+
         if self.current_token.type == TokenType.ATTEMPT:
             return self.attempt_rescue_expr()
-        
+
         if self.current_token.type == TokenType.ALERT:
+            line = self.current_token.line
             self.advance()
             expr = self.expr()
-            return AlertNode(expr)
+            node = AlertNode(expr); node.line = line
+            return node
 
         if self.current_token.type == TokenType.BREAK:
+            line = self.current_token.line
             self.advance()
-            return BreakNode()
+            node = BreakNode(); node.line = line
+            return node
 
         if self.current_token.type == TokenType.CONTINUE:
+            line = self.current_token.line
             self.advance()
-            return ContinueNode()
+            node = ContinueNode(); node.line = line
+            return node
 
         if self.current_token.type == TokenType.PASS:
+            line = self.current_token.line
             self.advance()
-            return PassNode()
-        
+            node = PassNode(); node.line = line
+            return node
+
         if self.current_token.type == TokenType.IDENTIFIER:
             # Lookahead for assignment
             next_token = self.tokens[self.pos + 1] if self.pos + 1 < len(self.tokens) else None
@@ -205,19 +217,24 @@ class Parser:
                 self.advance() # identifier
                 self.advance() # =
                 expr = self.expr()
-                return VarAssignNode(var_name, expr)
+                node = VarAssignNode(var_name, expr); node.line = var_name.line
+                return node
 
         node = self.expr()
-        
+
         # Check for indexing assignment: lista[0] = 5 or dict["key"] = val
         if isinstance(node, IndexAccessNode) and self.current_token.type == TokenType.ASSIGN:
+            line = node.line
             self.advance() # =
             value = self.expr()
-            return IndexAssignNode(node.base_node, node.index_node, value)
-            
+            assign_node = IndexAssignNode(node.base_node, node.index_node, value)
+            assign_node.line = line
+            return assign_node
+
         return node
 
     def attempt_rescue_expr(self):
+        line = self.current_token.line
         self.advance() # attempt
         if self.current_token.type != TokenType.LBRACE:
             raise StructureFault("Expected '{' after attempt")
@@ -260,9 +277,11 @@ class Parser:
             raise UnexpectedTokenFault(f"Expected '}}' at the end of rescue block, received {self.current_token}")
         self.advance()
         
-        return AttemptRescueNode(try_block, error_var, catch_block)
+        node = AttemptRescueNode(try_block, error_var, catch_block); node.line = line
+        return node
 
     def func_def(self):
+        line = self.current_token.line
         self.advance() # function
         if self.current_token.type != TokenType.IDENTIFIER:
             raise UnexpectedTokenFault("Expected function name")
@@ -300,9 +319,11 @@ class Parser:
             raise UnexpectedTokenFault("Expected '}'")
         self.advance()
         
-        return FuncDefNode(name_token, arg_tokens, block)
+        node = FuncDefNode(name_token, arg_tokens, block); node.line = line
+        return node
 
     def if_expr(self):
+        line = self.current_token.line
         cases = []
         else_case = None
 
@@ -339,9 +360,11 @@ class Parser:
                 raise UnexpectedTokenFault("Expected '}' after else block")
             self.advance()
 
-        return IfNode(cases, else_case)
+        node = IfNode(cases, else_case); node.line = line
+        return node
 
     def while_expr(self):
+        line = self.current_token.line
         self.advance() # while
         condition = self.expr()
         if self.current_token.type != TokenType.LBRACE:
@@ -351,9 +374,11 @@ class Parser:
         if self.current_token.type != TokenType.RBRACE:
             raise UnexpectedTokenFault("Expected '}' after while block")
         self.advance()
-        return WhileNode(condition, block)
+        node = WhileNode(condition, block); node.line = line
+        return node
 
     def for_expr(self):
+        line = self.current_token.line
         self.advance() # for
         if self.current_token.type != TokenType.IDENTIFIER:
             raise UnexpectedTokenFault("Expected variable name after 'for'")
@@ -374,7 +399,8 @@ class Parser:
         if self.current_token.type != TokenType.RBRACE:
             raise UnexpectedTokenFault("Expected '}' after for block")
         self.advance()
-        return ForNode(var_name, start_value, end_value, block)
+        node = ForNode(var_name, start_value, end_value, block); node.line = line
+        return node
 
     def expr(self):
         return self.logical_or()
@@ -407,17 +433,22 @@ class Parser:
 
         if token.type == TokenType.MINUS:
             self.advance()
-            return UnaryOpNode(token, self.factor())
+            node = UnaryOpNode(token, self.factor())
+            node.line = token.line
+            return node
 
         if token.type in (TokenType.INT, TokenType.FLOAT):
             self.advance()
             node = NumberNode(token)
+            node.line = token.line
         elif token.type == TokenType.STRING:
             self.advance()
             node = StringNode(token)
+            node.line = token.line
         elif token.type in (TokenType.TRUE, TokenType.FALSE):
             self.advance()
             node = BooleanNode(token)
+            node.line = token.line
         elif token.type == TokenType.LBRACKET:
             node = self.list_literal()
         elif token.type == TokenType.LBRACE:
@@ -428,7 +459,7 @@ class Parser:
             self.advance()
             node = self.expr()
             if self.current_token.type != TokenType.RPAREN:
-                 raise UnexpectedTokenFault("Expected ')'")
+                raise UnexpectedTokenFault("Expected ')'")
             self.advance()
         elif token.type == TokenType.EOF:
             raise UnexpectedEOFault("Unexpected end of expression")
@@ -436,13 +467,16 @@ class Parser:
             raise ExpressionFault(f"Invalid expression at token: {token}")
 
         while self.current_token.type == TokenType.LBRACKET:
+            bracket_line = self.current_token.line
             self.advance()
             index = self.expr()
             if self.current_token.type != TokenType.RBRACKET:
                 raise UnexpectedTokenFault("Expected ']'")
             self.advance()
-            node = IndexAccessNode(node, index)
-            
+            index_node = IndexAccessNode(node, index)
+            index_node.line = bracket_line
+            node = index_node
+
         return node
 
     def identifier_expr(self):
@@ -458,15 +492,18 @@ class Parser:
                     if self.current_token.type == TokenType.RPAREN:
                         break
                     args.append(self.expr())
-            
+
             if self.current_token.type != TokenType.RPAREN:
                 raise UnexpectedTokenFault("Expected ',' or ')'")
             self.advance()
-            return CallNode(token, args)
+            node = CallNode(token, args); node.line = token.line
+            return node
         else:
-            return VarAccessNode(token)
+            node = VarAccessNode(token); node.line = token.line
+            return node
 
     def list_literal(self):
+        line = self.current_token.line
         self.advance() # [
         elements = []
         if self.current_token.type != TokenType.RBRACKET:
@@ -480,9 +517,11 @@ class Parser:
         if self.current_token.type != TokenType.RBRACKET:
             raise UnexpectedTokenFault("Expected ']' at the end of list")
         self.advance()
-        return ListNode(elements)
+        node = ListNode(elements); node.line = line
+        return node
 
     def dict_literal(self):
+        line = self.current_token.line
         self.advance() # {
         pairs = []
         if self.current_token.type != TokenType.RBRACE:
@@ -507,7 +546,8 @@ class Parser:
         if self.current_token.type != TokenType.RBRACE:
             raise UnexpectedTokenFault("Expected '}' at the end of dictionary")
         self.advance()
-        return DictNode(pairs)
+        node = DictNode(pairs); node.line = line
+        return node
 
     def bin_op(self, func, ops):
         left = func()
@@ -518,5 +558,7 @@ class Parser:
                 right = func()
             except ExpressionFault:
                 raise OperatorFault(f"Operator '{op_token}' expects a valid expression on the right")
-            left = BinOpNode(left, op_token, right)
+            bin_node = BinOpNode(left, op_token, right)
+            bin_node.line = op_token.line
+            left = bin_node
         return left

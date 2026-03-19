@@ -53,6 +53,7 @@ class Interpreter:
         self.global_env = Environment()
         self.current_env = self.global_env
         self.imported_files = set()
+        self.current_line = None
         self.builtins = {
             'write': self.builtin_write,
             'listen': self.builtin_listen,
@@ -87,9 +88,18 @@ class Interpreter:
                 result = self.visit(statement)
             return result
 
+        line = getattr(node, 'line', None)
+        if line is not None:
+            self.current_line = line
+
         method_name = f'visit_{type(node).__name__}'
         method = getattr(self, method_name, self.no_visit_method)
-        return method(node)
+        try:
+            return method(node)
+        except LuzError as e:
+            if not isinstance(e, (ReturnException, BreakException, ContinueException)) and e.line is None:
+                e.line = self.current_line
+            raise
 
     def no_visit_method(self, node):
         raise InternalFault(f"No visit_{type(node).__name__} method defined in the interpreter")

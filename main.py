@@ -15,7 +15,10 @@ def run(text, interpreter):
         return result
     except Exception as e:
         error_name = type(e).__name__
-        print(f"{error_name}: {e}")
+        line = getattr(e, 'line', None)
+        prefix = f"[Line {line}] " if line is not None else ""
+        msg = getattr(e, 'message', str(e))
+        print(f"{prefix}{error_name}: {msg}")
         return None
 
 def main():
@@ -51,7 +54,10 @@ def main():
                 break
             except Exception as e:
                 error_name = type(e).__name__
-                print(f"{error_name}: {e}")
+                line = getattr(e, 'line', None)
+                prefix = f"[Line {line}] " if line is not None else ""
+                msg = getattr(e, 'message', str(e))
+                print(f"{prefix}{error_name}: {msg}")
 
 if __name__ == "__main__":
     main()

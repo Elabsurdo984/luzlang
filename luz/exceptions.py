@@ -2,6 +2,7 @@
 class LuzError(Exception):
     def __init__(self, message):
         self.message = message
+        self.line = None
         super().__init__(message)
 
 # Internal signals for control flow (not faults)

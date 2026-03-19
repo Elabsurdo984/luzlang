@@ -47,9 +47,10 @@ class TokenType(Enum):
     EOF = auto()
 
 class Token:
-    def __init__(self, type, value=None):
+    def __init__(self, type, value=None, line=None):
         self.type = type
         self.value = value
+        self.line = line
 
     def __repr__(self):
         if self.value is not None:
