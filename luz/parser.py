@@ -425,7 +425,18 @@ class Parser:
         return self.bin_op(self.term, (TokenType.PLUS, TokenType.MINUS))
 
     def term(self):
-        return self.bin_op(self.factor, (TokenType.MUL, TokenType.DIV))
+        return self.bin_op(self.power, (TokenType.MUL, TokenType.DIV, TokenType.MOD))
+
+    def power(self):
+        base = self.factor()
+        if self.current_token.type == TokenType.POW:
+            op = self.current_token
+            self.advance()
+            exp = self.power()  # right-recursive → right-associative
+            node = BinOpNode(base, op, exp)
+            node.line = op.line
+            return node
+        return base
 
     def factor(self):
         token = self.current_token

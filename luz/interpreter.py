@@ -278,10 +278,21 @@ class Interpreter:
             if right == 0:
                 raise ZeroDivisionFault("Division by zero is not allowed")
             try:
-                # In Luz, / is always float division (following Python 3)
                 return float(left) / float(right)
             except TypeError:
                 raise IllegalOperationFault(f"Unsupported operand types for '/': {type(left).__name__} and {type(right).__name__}")
+        elif node.op_token.type == TokenType.MOD:
+            if right == 0:
+                raise ZeroDivisionFault("Modulo by zero is not allowed")
+            try:
+                return left % right
+            except TypeError:
+                raise IllegalOperationFault(f"Unsupported operand types for '%': {type(left).__name__} and {type(right).__name__}")
+        elif node.op_token.type == TokenType.POW:
+            try:
+                return left ** right
+            except TypeError:
+                raise IllegalOperationFault(f"Unsupported operand types for '**': {type(left).__name__} and {type(right).__name__}")
         elif node.op_token.type == TokenType.EE:
             return left == right
         elif node.op_token.type == TokenType.NE:
