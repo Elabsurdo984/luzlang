@@ -28,6 +28,8 @@ for i = 1 to 5 {
   - [Operators](#operators)
   - [Control Flow](#control-flow)
   - [Functions](#functions)
+  - [Collections](#collections)
+  - [Object-Oriented Programming](#object-oriented-programming)
   - [Error Handling](#error-handling)
   - [Modules](#modules)
   - [Built-in Functions](#built-in-functions)
@@ -39,11 +41,13 @@ for i = 1 to 5 {
 ## Features
 
 - **Dynamic typing** — integers, floats, strings, booleans, lists, dictionaries
-- **Arithmetic operators** — `+`, `-`, `*`, `/`, `%`, `**`
+- **Arithmetic operators** — `+`, `-`, `*`, `/`, `//`, `%`, `**`
 - **String operations** — indexing, escape sequences, and 11 built-in string functions
 - **Control flow** — `if / elif / else`, `while`, `for`, `break`, `continue`, `pass`
 - **Functions** — user-defined functions with closures and return values
-- **Error handling** — `attempt / rescue` blocks
+- **Object-oriented programming** — classes, instances, inheritance (`extends`), method overriding, and `super`
+- **Polymorphism** — duck typing, `typeof()`, and `instanceof()`
+- **Error handling** — `attempt / rescue` blocks and `alert`
 - **Modules** — `import` other `.luz` files
 - **Helpful errors** — every error message includes the line number
 - **REPL** — interactive shell for quick experimentation
@@ -282,6 +286,84 @@ write(values(person))     # ["Alice", 31]
 
 ---
 
+### Object-Oriented Programming
+
+**Defining a class**
+
+```
+class Animal {
+    function init(self, name) {
+        self.name = name
+    }
+    function speak(self) {
+        write(self.name + " makes a sound")
+    }
+}
+
+a = Animal("Leo")
+a.speak()
+write(a.name)
+```
+
+**Inheritance**
+
+Use `extends` to inherit from a parent class. Child classes inherit all parent methods automatically.
+
+```
+class Dog extends Animal {
+    function init(self, name, breed) {
+        super.init(name)
+        self.breed = breed
+    }
+    function speak(self) {
+        super.speak()
+        write("(woof!)")
+    }
+}
+
+d = Dog("Rex", "Labrador")
+d.speak()
+```
+
+**Method overriding**
+
+Defining a method with the same name in a child class replaces the parent's version.
+
+**Polymorphism**
+
+Because Luz is dynamically typed, any object that has the right methods can be used interchangeably:
+
+```
+class Circle extends Shape {
+    function init(self, r) { self.r = r }
+    function area(self) { return self.r * self.r * 3 }
+}
+
+class Rectangle extends Shape {
+    function init(self, w, h) { self.w = w   self.h = h }
+    function area(self) { return self.w * self.h }
+}
+
+shapes = [Circle(5), Rectangle(4, 6)]
+for i = 0 to 1 {
+    write(shapes[i].area())
+}
+```
+
+**Type inspection**
+
+```
+write(typeof(42))             # int
+write(typeof("hello"))        # string
+write(typeof(d))              # Dog
+
+write(instanceof(d, Dog))     # true
+write(instanceof(d, Animal))  # true  (walks the hierarchy)
+write(instanceof(d, Circle))  # false
+```
+
+---
+
 ### Error Handling
 
 ```
@@ -332,6 +414,13 @@ result = my_function(42)
 |---|---|
 | `write(...)` | Print values to stdout |
 | `listen(prompt)` | Read user input. Auto-converts numbers |
+
+**Type inspection**
+
+| Function | Description | Example |
+|---|---|---|
+| `typeof(value)` | Returns the type name as a string | `typeof(42)` → `"int"` |
+| `instanceof(obj, Class)` | True if obj is an instance of Class or subclass | `instanceof(d, Animal)` → `true` |
 
 **Type casting**
 
@@ -477,11 +566,10 @@ Contributions are welcome. If you want to add a feature, fix a bug, or improve t
 4. Open a pull request
 
 If you're looking for ideas, check the open issues or consider:
-- Adding more built-in math functions (`abs`, `min`, `max`, `round`)
-- Integer division operator (`//`)
-- First-class functions
+- Built-in math functions (`abs`, `min`, `max`, `round`)
+- First-class functions (passing functions as values)
 - Negative index support for lists
-- More test coverage
+- More test coverage, especially for OOP
 
 ---
 
