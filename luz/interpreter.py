@@ -5,9 +5,10 @@ from .parser import Parser
 import os
 
 class Environment:
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, is_function_scope=False):
         self.records = {}
         self.parent = parent
+        self.is_function_scope = is_function_scope
 
     def define(self, name, value):
         self.records[name] = value
@@ -24,8 +25,10 @@ class Environment:
         if name in self.records:
             self.records[name] = value
             return value
-        if self.parent:
+        # Walk up only if we haven't hit a function boundary
+        if self.parent and not self.is_function_scope:
             return self.parent.assign(name, value)
+        # Function scope or global: create the variable here
         self.records[name] = value
         return value
 
@@ -38,7 +41,7 @@ class LuzFunction:
         if len(arguments) != len(self.node.arg_tokens):
             raise ArityFault(f"Function '{self.node.name_token.value}' expects {len(self.node.arg_tokens)} arguments, but received {len(arguments)}")
             
-        env = Environment(self.closure)
+        env = Environment(self.closure, is_function_scope=True)
         for i in range(len(self.node.arg_tokens)):
             env.define(self.node.arg_tokens[i].value, arguments[i])
         
