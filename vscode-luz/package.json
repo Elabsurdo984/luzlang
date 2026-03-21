@@ -3,7 +3,7 @@
     "displayName": "Luz Language",
     "description": "Luz language support: syntax highlighting, autocompletion, error detection, snippets",
     "version": "1.0.0",
-    "publisher": "Elabsurdo984",
+    "publisher": "Elabsurdo984-luzlang",
     "icon": "icon.png",
     "engines": {
         "vscode": "^1.75.0"
@@ -42,6 +42,10 @@
                 }
             }
         }
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Elabsurdo984/luz-lang"
     },
     "scripts": {
         "compile": "tsc -p ./",
