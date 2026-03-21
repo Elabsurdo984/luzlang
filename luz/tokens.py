@@ -107,6 +107,12 @@ class TokenType(Enum):
     LBRACE = auto()    # {  (block delimiter for every compound statement)
     RBRACE = auto()    # }
 
+    # ── Compound assignment ───────────────────────────────────────────────────
+    PLUS_ASSIGN  = auto()  # +=
+    MINUS_ASSIGN = auto()  # -=
+    MUL_ASSIGN   = auto()  # *=
+    DIV_ASSIGN   = auto()  # /=
+
     # ── Sentinel ─────────────────────────────────────────────────────────────
     EOF = auto()       # End-of-file marker; always the last token in the list
 

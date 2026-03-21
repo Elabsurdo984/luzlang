@@ -368,12 +368,16 @@ class Parser:
         if self.current_token.type == TokenType.CLASS:
             return self.class_def()
 
+        COMPOUND = {
+            TokenType.PLUS_ASSIGN:  TokenType.PLUS,
+            TokenType.MINUS_ASSIGN: TokenType.MINUS,
+            TokenType.MUL_ASSIGN:   TokenType.MUL,
+            TokenType.DIV_ASSIGN:   TokenType.DIV,
+        }
+
         if self.current_token.type == TokenType.IDENTIFIER:
-            # One-token lookahead: if the token after the identifier is '=',
-            # this is a variable assignment rather than an expression.
-            # We must check here before entering expr() because expr() would
-            # parse the identifier as a VarAccessNode and then get confused by
-            # the '=' that follows.
+            # One-token lookahead: if the token after the identifier is '=' or
+            # a compound assignment operator, handle it before entering expr().
             next_token = self.tokens[self.pos + 1] if self.pos + 1 < len(self.tokens) else None
             if next_token and next_token.type == TokenType.ASSIGN:
                 var_name = self.current_token
@@ -381,6 +385,19 @@ class Parser:
                 self.advance()  # Consume '='
                 expr = self.expr()
                 node = VarAssignNode(var_name, expr); node.line = var_name.line
+                return node
+
+            if next_token and next_token.type in COMPOUND:
+                var_name = self.current_token
+                self.advance()  # Consume the identifier
+                op_token = self.current_token
+                op_token = op_token.__class__(COMPOUND[op_token.type], None, op_token.line)
+                self.advance()  # Consume the compound operator
+                rhs = self.expr()
+                # Desugar: x += e  →  x = x + e
+                left = VarAccessNode(var_name); left.line = var_name.line
+                binop = BinOpNode(left, op_token, rhs); binop.line = var_name.line
+                node = VarAssignNode(var_name, binop); node.line = var_name.line
                 return node
 
         # Fall through: parse as a general expression (function call, arithmetic, …)

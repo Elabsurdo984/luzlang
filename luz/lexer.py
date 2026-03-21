@@ -240,6 +240,9 @@ class Lexer:
         if self.current_char == '/':
             self.advance()  # Consume the second '/'
             return Token(TokenType.IDIV, None, line)
+        if self.current_char == '=':
+            self.advance()
+            return Token(TokenType.DIV_ASSIGN, None, line)
         return Token(TokenType.DIV, None, line)
 
     # make_star() handles '*' (multiplication) vs '**' (exponentiation).
@@ -249,6 +252,9 @@ class Lexer:
         if self.current_char == '*':
             self.advance()  # Consume the second '*'
             return Token(TokenType.POW, None, line)
+        if self.current_char == '=':
+            self.advance()
+            return Token(TokenType.MUL_ASSIGN, None, line)
         return Token(TokenType.MUL, None, line)
 
     # make_equals() handles '=' (assignment), '==' (equality), and '=>' (arrow).
@@ -335,11 +341,21 @@ class Lexer:
 
             # Single-character operators are produced inline — no helper needed.
             elif self.current_char == '+':
-                tokens.append(Token(TokenType.PLUS, None, self.line))
+                line = self.line
                 self.advance()
+                if self.current_char == '=':
+                    self.advance()
+                    tokens.append(Token(TokenType.PLUS_ASSIGN, None, line))
+                else:
+                    tokens.append(Token(TokenType.PLUS, None, line))
             elif self.current_char == '-':
-                tokens.append(Token(TokenType.MINUS, None, self.line))
+                line = self.line
                 self.advance()
+                if self.current_char == '=':
+                    self.advance()
+                    tokens.append(Token(TokenType.MINUS_ASSIGN, None, line))
+                else:
+                    tokens.append(Token(TokenType.MINUS, None, line))
 
             # Multi-character operators need lookahead — delegate to helpers.
             elif self.current_char == '*':
