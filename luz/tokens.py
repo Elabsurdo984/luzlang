@@ -72,6 +72,8 @@ class TokenType(Enum):
     # ── Functions & scope ────────────────────────────────────────────────────
     FUNCTION = auto()  # Keyword that begins a function definition
     RETURN = auto()    # Return a value from a function
+    FN = auto()        # fn — short keyword for lambdas / anonymous functions
+    ARROW = auto()     # => — separates params from body in a lambda
 
     # ── Module system ────────────────────────────────────────────────────────
     IMPORT = auto()    # Import another Luz source file into the global env

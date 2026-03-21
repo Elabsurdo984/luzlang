@@ -165,6 +165,20 @@ class ForEachNode:
         self.iterable_node = iterable_node
         self.block = block
 
+# Represents a lambda (short form):  fn(x, y) => expr
+# The expression is implicitly returned — no `return` needed.
+class LambdaNode:
+    def __init__(self, param_tokens, expr_node):
+        self.param_tokens = param_tokens
+        self.expr_node = expr_node
+
+# Represents an anonymous function (long form):  fn(x, y) { body }
+# Behaves exactly like a named function but has no name.
+class AnonFuncNode:
+    def __init__(self, param_tokens, block):
+        self.param_tokens = param_tokens
+        self.block = block
+
 # Represents a function definition: function name(args) { block }
 # arg_tokens is a list of IDENTIFIER tokens (the parameter names).
 class FuncDefNode:
@@ -732,6 +746,10 @@ class Parser:
             # Could be a plain variable read or a function call — identifier_expr
             # peeks at the next token to decide.
             node = self.identifier_expr()
+        elif token.type == TokenType.FN:
+            node = self.lambda_or_anon()
+            node.line = token.line
+            return node
         elif token.type == TokenType.SELF:
             # `self` inside a method refers to the current instance.
             # It is treated as a variable access so that `self.attr` parsing
@@ -823,6 +841,53 @@ class Parser:
             # Plain variable read
             node = VarAccessNode(token); node.line = token.line
             return node
+
+    # lambda_or_anon() parses both forms of anonymous callable:
+    #   Short (lambda):  fn(x) => expr          — expr is implicitly returned
+    #   Long (anon fn):  fn(x) { body }         — body may contain any statements
+    def lambda_or_anon(self):
+        line = self.current_token.line
+        self.advance()  # Consume 'fn'
+
+        if self.current_token.type != TokenType.LPAREN:
+            raise StructureFault("Expected '(' after 'fn'")
+        self.advance()  # Consume '('
+
+        params = []
+        if self.current_token.type in (TokenType.IDENTIFIER, TokenType.SELF):
+            params.append(self.current_token)
+            self.advance()
+            while self.current_token.type == TokenType.COMMA:
+                self.advance()
+                if self.current_token.type not in (TokenType.IDENTIFIER, TokenType.SELF):
+                    raise UnexpectedTokenFault("Expected parameter name")
+                params.append(self.current_token)
+                self.advance()
+
+        if self.current_token.type != TokenType.RPAREN:
+            raise UnexpectedTokenFault("Expected ')'")
+        self.advance()  # Consume ')'
+
+        if self.current_token.type == TokenType.ARROW:
+            # Short form: fn(x) => expr
+            self.advance()  # Consume '=>'
+            expr = self.expr()
+            node = LambdaNode(params, expr)
+            node.line = line
+            return node
+
+        if self.current_token.type == TokenType.LBRACE:
+            # Long form: fn(x) { body }
+            self.advance()  # Consume '{'
+            block = self.statements()
+            if self.current_token.type != TokenType.RBRACE:
+                raise UnexpectedTokenFault("Expected '}'")
+            self.advance()  # Consume '}'
+            node = AnonFuncNode(params, block)
+            node.line = line
+            return node
+
+        raise StructureFault("Expected '=>' or '{' after lambda parameters")
 
     # _parse_fstring_parts() splits the raw template stored in a FSTRING token
     # into a list of alternating literal strings and expression AST nodes.

@@ -142,6 +142,48 @@ class LuzFunction:
         return None
 
 
+# ── Lambda / anonymous function ───────────────────────────────────────────────
+
+# LuzLambda is the runtime value produced by a `fn` expression.
+# It covers both forms:
+#   Short:  fn(x) => expr      (is_expr=True  — expression is implicitly returned)
+#   Long:   fn(x) { body }     (is_expr=False — body may contain any statements)
+class LuzLambda:
+    def __init__(self, param_tokens, body, closure, is_expr=False):
+        self.param_tokens = param_tokens
+        self.body = body        # ASTNode for short form, list of nodes for long form
+        self.closure = closure
+        self.is_expr = is_expr
+
+    def __call__(self, interpreter, arguments, extra_bindings=None):
+        if len(arguments) != len(self.param_tokens):
+            raise ArityFault(f"Lambda expects {len(self.param_tokens)} arguments, got {len(arguments)}")
+        env = Environment(self.closure, is_function_scope=True)
+        for i, token in enumerate(self.param_tokens):
+            env.define(token.value, arguments[i])
+        if extra_bindings:
+            for name, value in extra_bindings.items():
+                env.define(name, value)
+        if self.is_expr:
+            # Short form — evaluate the single expression and return its value.
+            previous_env = interpreter.current_env
+            interpreter.current_env = env
+            try:
+                return interpreter.visit(self.body)
+            finally:
+                interpreter.current_env = previous_env
+        else:
+            # Long form — run the block and catch any `return` signal.
+            try:
+                interpreter.execute_block(self.body, env)
+            except ReturnException as e:
+                return e.value
+            return None
+
+    def __repr__(self):
+        return "<lambda>"
+
+
 # ── Class and instance representation ────────────────────────────────────────
 
 # LuzClass holds the class name, its methods, and an optional parent class.
@@ -760,6 +802,14 @@ class Interpreter:
 
     # ── Function definition & calls ───────────────────────────────────────────
 
+    # visit_LambdaNode() creates a LuzLambda for fn(x) => expr
+    def visit_LambdaNode(self, node):
+        return LuzLambda(node.param_tokens, node.expr_node, self.current_env, is_expr=True)
+
+    # visit_AnonFuncNode() creates a LuzLambda for fn(x) { body }
+    def visit_AnonFuncNode(self, node):
+        return LuzLambda(node.param_tokens, node.block, self.current_env, is_expr=False)
+
     # visit_FuncDefNode() creates a LuzFunction that captures the current
     # environment as its closure, then stores it in the environment under the
     # function's name.  The function body is NOT executed here.
@@ -804,7 +854,7 @@ class Interpreter:
                     init_method(self, [instance] + arguments, extra_bindings=extra)
                 return instance
 
-            if not isinstance(function, LuzFunction):
+            if not isinstance(function, (LuzFunction, LuzLambda)):
                 # The name exists but holds a non-callable value (e.g. a number).
                 raise InvalidUsageFault(f"'{func_name}' is not a callable function")
             return function(self, arguments)
@@ -1099,7 +1149,7 @@ class Interpreter:
             return value.luz_class.name
         if isinstance(value, LuzClass):
             return "class"
-        if isinstance(value, LuzFunction):
+        if isinstance(value, (LuzFunction, LuzLambda)):
             return "function"
         if isinstance(value, bool):
             return "bool"

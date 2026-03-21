@@ -46,6 +46,7 @@ class Lexer:
         'not': TokenType.NOT,
         'function': TokenType.FUNCTION,
         'return': TokenType.RETURN,
+        'fn': TokenType.FN,
         'import': TokenType.IMPORT,
         'attempt': TokenType.ATTEMPT,
         'rescue': TokenType.RESCUE,
@@ -250,13 +251,16 @@ class Lexer:
             return Token(TokenType.POW, None, line)
         return Token(TokenType.MUL, None, line)
 
-    # make_equals() handles '=' (assignment) vs '==' (equality comparison).
+    # make_equals() handles '=' (assignment), '==' (equality), and '=>' (arrow).
     def make_equals(self):
         line = self.line
         self.advance()  # Consume the first '='
         if self.current_char == '=':
             self.advance()  # Consume the second '='
             return Token(TokenType.EE, None, line)
+        if self.current_char == '>':
+            self.advance()  # Consume '>'
+            return Token(TokenType.ARROW, None, line)
         return Token(TokenType.ASSIGN, None, line)
 
     # make_not_equals() handles '!=' only.  A bare '!' is not a valid token in
