@@ -1,0 +1,61 @@
+site_name: Luz Language
+site_description: A lightweight, interpreted programming language written in Python
+site_url: https://elabsurdo984.github.io/luz-lang/
+repo_url: https://github.com/Elabsurdo984/luz-lang
+repo_name: Elabsurdo984/luz-lang
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - admonition
+  - pymdownx.details
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Usage: getting-started/usage.md
+  - Language Reference:
+      - Types: language/types.md
+      - Variables: language/variables.md
+      - Operators: language/operators.md
+      - Control Flow: language/control-flow.md
+      - Format Strings: language/format-strings.md
+      - Functions: language/functions.md
+      - Lambdas: language/lambdas.md
+      - Collections: language/collections.md
+      - Object-Oriented Programming: language/oop.md
+      - Error Handling: language/error-handling.md
+      - Modules: language/modules.md
+  - Built-in Functions: builtins.md
+  - Architecture: architecture.md
