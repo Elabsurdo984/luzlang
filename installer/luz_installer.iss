@@ -1,6 +1,9 @@
 [Setup]
 AppName=Luz
-AppVersion=1.8.0
+#ifndef AppVersion
+  #define AppVersion "dev"
+#endif
+AppVersion={#AppVersion}
 AppPublisher=Elabsurdo984
 AppPublisherURL=https://elabsurdo984.github.io/luz-lang/
 AppSupportURL=https://github.com/Elabsurdo984/luz-lang/issues
@@ -9,7 +12,7 @@ DefaultDirName={autopf}\Luz
 DefaultGroupName=Luz
 AllowNoIcons=yes
 OutputDir=..\installer_output
-OutputBaseFilename=luz-1.8.0-setup
+OutputBaseFilename=luz-setup
 SetupIconFile=..\img\icon.ico
 Compression=lzma
 SolidCompression=yes
