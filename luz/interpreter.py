@@ -331,6 +331,28 @@ class Interpreter:
     def visit_NullNode(self, node):
         return None
 
+    # visit_FStringNode() evaluates each expression part and concatenates
+    # everything into a single string.  Null, booleans, and instances use
+    # their Luz display representations rather than Python's defaults.
+    def visit_FStringNode(self, node):
+        result = ''
+        for part in node.parts:
+            if isinstance(part, str):
+                result += part
+            else:
+                val = self.visit(part)
+                result += self._luz_str(val)
+        return result
+
+    # _luz_str() converts any Luz value to its display string, using Luz
+    # conventions (null, true/false) rather than Python's (None, True/False).
+    def _luz_str(self, value):
+        if value is None:
+            return 'null'
+        if isinstance(value, bool):
+            return 'true' if value else 'false'
+        return str(value)
+
     def visit_ListNode(self, node):
         # Evaluate every element expression and collect the results into a Python list.
         return [self.visit(element) for element in node.elements]

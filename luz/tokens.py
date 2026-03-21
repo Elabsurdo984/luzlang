@@ -95,6 +95,7 @@ class TokenType(Enum):
 
     # ── String literals ───────────────────────────────────────────────────────
     STRING = auto()    # Double-quoted string, e.g. "hello"
+    FSTRING = auto()   # Format string, e.g. $"Hello {name}"  (expressions in {})
 
     # ── Punctuation / delimiters ──────────────────────────────────────────────
     COMMA = auto()     # ,  (argument separators, list elements, …)

@@ -59,6 +59,12 @@ class StringNode:
         self.token = token
     def __repr__(self): return f"\"{self.token.value}\""
 
+# Represents a format string: $"Hello {name}, you are {age} years old"
+# parts is a list of alternating str (literal segments) and ASTNode (expressions).
+class FStringNode:
+    def __init__(self, parts):
+        self.parts = parts
+
 # Represents a boolean literal (true / false).
 class BooleanNode:
     def __init__(self, token):
@@ -706,6 +712,10 @@ class Parser:
             self.advance()
             node = StringNode(token)
             node.line = token.line
+        elif token.type == TokenType.FSTRING:
+            self.advance()
+            node = self._parse_fstring_parts(token)
+            node.line = token.line
         elif token.type in (TokenType.TRUE, TokenType.FALSE):
             self.advance()
             node = BooleanNode(token)
@@ -813,6 +823,43 @@ class Parser:
             # Plain variable read
             node = VarAccessNode(token); node.line = token.line
             return node
+
+    # _parse_fstring_parts() splits the raw template stored in a FSTRING token
+    # into a list of alternating literal strings and expression AST nodes.
+    # Example:  "Hello {name}, you have {count} messages"
+    #   → ["Hello ", VarAccessNode(name), ", you have ", VarAccessNode(count), " messages"]
+    def _parse_fstring_parts(self, token):
+        from .lexer import Lexer as _Lexer
+        raw = token.value
+        parts = []
+        i = 0
+        while i < len(raw):
+            if raw[i] == '{':
+                # Find the matching closing brace, tracking depth for nested {}
+                depth = 1
+                j = i + 1
+                while j < len(raw) and depth > 0:
+                    if raw[j] == '{':
+                        depth += 1
+                    elif raw[j] == '}':
+                        depth -= 1
+                    j += 1
+                expr_text = raw[i + 1: j - 1]
+                # Sub-parse the expression inside { } using a fresh Lexer+Parser
+                sub_tokens = _Lexer(expr_text).get_tokens()
+                sub_parser = Parser(sub_tokens)
+                parts.append(sub_parser.expr())
+                i = j
+            else:
+                # Collect the literal text up to the next '{' or end of template
+                j = i
+                while j < len(raw) and raw[j] != '{':
+                    j += 1
+                if j > i:
+                    parts.append(raw[i:j])
+                i = j
+        node = FStringNode(parts)
+        return node
 
     # list_literal() parses:  [ expr, expr, … ]
     # A trailing comma before ']' is permitted so that multi-line lists are

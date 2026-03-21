@@ -185,6 +185,51 @@ class Lexer:
         self.advance()  # Consume the closing '"'
         return Token(TokenType.STRING, string_val, line)
 
+    # make_fstring() collects the raw template content of a $"..." format string.
+    # It does NOT parse expressions — that happens in the parser.  The raw
+    # content is stored as-is so the parser can split on { } and sub-parse each
+    # embedded expression.  Escape sequences outside of { } are resolved here;
+    # characters inside { } are kept verbatim so the parser receives valid code.
+    def make_fstring(self, line):
+        raw = ''
+        self.advance()  # Consume opening '"'
+        brace_depth = 0
+        while self.current_char is not None:
+            if brace_depth == 0 and self.current_char == '"':
+                break  # Closing quote reached outside any expression
+            if self.current_char == '{':
+                brace_depth += 1
+                raw += self.current_char
+                self.advance()
+            elif self.current_char == '}':
+                brace_depth -= 1
+                raw += self.current_char
+                self.advance()
+            elif self.current_char == '\\' and brace_depth == 0:
+                # Escape sequences only apply outside { }
+                self.advance()
+                if self.current_char is None:
+                    e = InvalidTokenFault("Unexpected end of format string after '\\'")
+                    e.line = line
+                    raise e
+                escaped = self.ESCAPE_SEQUENCES.get(self.current_char)
+                if escaped is None:
+                    e = InvalidTokenFault(f"Unknown escape sequence '\\{self.current_char}'")
+                    e.line = line
+                    raise e
+                raw += escaped
+                self.advance()
+            else:
+                raw += self.current_char
+                self.advance()
+
+        if self.current_char != '"':
+            e = InvalidTokenFault("Unterminated format string")
+            e.line = line
+            raise e
+        self.advance()  # Consume closing '"'
+        return Token(TokenType.FSTRING, raw, line)
+
     # make_slash() handles the ambiguity between '/' (division) and '//'
     # (integer division).  After consuming the first '/', it peeks at the next
     # character to decide which token to emit.
@@ -271,6 +316,15 @@ class Lexer:
 
             elif self.current_char == '#':
                 self.skip_comment()
+
+            elif self.current_char == '$':
+                line = self.line
+                self.advance()  # Consume '$'
+                if self.current_char != '"':
+                    e = InvalidTokenFault("Expected '\"' after '$' for format string")
+                    e.line = line
+                    raise e
+                tokens.append(self.make_fstring(line))
 
             elif self.current_char == '"':
                 tokens.append(self.make_string())
