@@ -112,6 +112,8 @@ class TokenType(Enum):
     MINUS_ASSIGN = auto()  # -=
     MUL_ASSIGN   = auto()  # *=
     DIV_ASSIGN   = auto()  # /=
+    MOD_ASSIGN   = auto()  # %=
+    POW_ASSIGN   = auto()  # **=
 
     # ── Null coalescing ───────────────────────────────────────────────────────
     NULL_COALESCE = auto()  # ?? — returns left if not null, otherwise right

@@ -255,6 +255,9 @@ class Lexer:
         self.advance()  # Consume the first '*'
         if self.current_char == '*':
             self.advance()  # Consume the second '*'
+            if self.current_char == '=':
+                self.advance()
+                return Token(TokenType.POW_ASSIGN, None, line)
             return Token(TokenType.POW, None, line)
         if self.current_char == '=':
             self.advance()
@@ -365,8 +368,13 @@ class Lexer:
             elif self.current_char == '*':
                 tokens.append(self.make_star())
             elif self.current_char == '%':
-                tokens.append(Token(TokenType.MOD, None, self.line))
+                line = self.line
                 self.advance()
+                if self.current_char == '=':
+                    self.advance()
+                    tokens.append(Token(TokenType.MOD_ASSIGN, None, line))
+                else:
+                    tokens.append(Token(TokenType.MOD, None, line))
             elif self.current_char == '/':
                 tokens.append(self.make_slash())
 

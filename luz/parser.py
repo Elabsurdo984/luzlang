@@ -457,6 +457,8 @@ class Parser:
             TokenType.MINUS_ASSIGN: TokenType.MINUS,
             TokenType.MUL_ASSIGN:   TokenType.MUL,
             TokenType.DIV_ASSIGN:   TokenType.DIV,
+            TokenType.MOD_ASSIGN:   TokenType.MOD,
+            TokenType.POW_ASSIGN:   TokenType.POW,
         }
 
         # Dict destructuring: {name, age} = expr
