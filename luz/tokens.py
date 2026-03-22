@@ -127,6 +127,9 @@ class TokenType(Enum):
     CASE   = auto()    # case <expr>, … { block }
     MATCH  = auto()    # match <expr> { pattern => expr, … }
 
+    # ── For step ──────────────────────────────────────────────────────────────
+    STEP = auto()      # step <expr> — optional increment in for-range loops
+
     # ── Sentinel ─────────────────────────────────────────────────────────────
     EOF = auto()       # End-of-file marker; always the last token in the list
 

@@ -189,10 +189,11 @@ class WhileNode:
 # Represents a for loop with a numeric range: for var = start to end { block }
 # The loop variable is scoped to the loop body.
 class ForNode:
-    def __init__(self, var_name_token, start_value_node, end_value_node, block):
+    def __init__(self, var_name_token, start_value_node, end_value_node, block, step_node=None):
         self.var_name_token = var_name_token
         self.start_value_node = start_value_node
         self.end_value_node = end_value_node
+        self.step_node = step_node  # None means default step of 1
         self.block = block
 
 # Represents a for-each loop over a collection: for item in expr { block }
@@ -879,6 +880,10 @@ class Parser:
             raise StructureFault("Expected 'to' after for start value")
         self.advance()  # Consume 'to'
         end_value = self.expr()
+        step_node = None
+        if self.current_token.type == TokenType.STEP:
+            self.advance()  # Consume 'step'
+            step_node = self.expr()
         if self.current_token.type != TokenType.LBRACE:
             raise StructureFault("Expected '{' after for range")
         self.advance()
@@ -886,7 +891,7 @@ class Parser:
         if self.current_token.type != TokenType.RBRACE:
             raise UnexpectedTokenFault("Expected '}' after for block")
         self.advance()
-        node = ForNode(var_name, start_value, end_value, block); node.line = line
+        node = ForNode(var_name, start_value, end_value, block, step_node); node.line = line
         return node
 
     # ── Expression parsing (operator-precedence chain) ────────────────────────

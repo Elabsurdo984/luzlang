@@ -937,29 +937,30 @@ class Interpreter:
         var_name = node.var_name_token.value
         start_value = self.visit(node.start_value_node)
         end_value = self.visit(node.end_value_node)
+        step = self.visit(node.step_node) if node.step_node is not None else 1
 
         if not isinstance(start_value, (int, float)) or not isinstance(end_value, (int, float)):
             raise TypeViolationFault("For loop range boundaries must be numeric")
+        if not isinstance(step, (int, float)):
+            raise TypeViolationFault("For loop step must be numeric")
+        if step == 0:
+            raise InvalidUsageFault("For loop step cannot be zero")
 
         i = start_value
-        # Create a dedicated child environment for the loop so the counter
-        # variable (and any variables defined inside the body) don't leak out.
         previous_env = self.current_env
         self.current_env = Environment(previous_env)
         try:
-            while i <= end_value:
-                # Re-define the loop variable each iteration so it always
-                # reflects the current counter value.
+            while (i <= end_value if step > 0 else i >= end_value):
                 self.current_env.define(var_name, i)
                 try:
                     self.visit(node.block)
                 except BreakException:
                     break
                 except ContinueException:
-                    pass  # ContinueException just skips to the i += 1 below
-                i += 1
+                    pass
+                i += step
         finally:
-            self.current_env = previous_env  # Restore scope even if an error escapes
+            self.current_env = previous_env
         return None
 
     # visit_ForEachNode() iterates over a list, string, or dict.
