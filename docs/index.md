@@ -81,7 +81,7 @@ fetch("https://api.github.com/repos/Elabsurdo984/luz-lang/releases/latest")
     if (!data.assets) return;
     const isLinux = navigator.platform.toLowerCase().includes("linux");
     const win = data.assets.find(a => a.name.endsWith("-setup.exe"));
-    const linux = data.assets.find(a => a.name.endsWith("-linux.tar.gz"));
+    const linux = data.assets.find(a => a.name.includes("linux") && a.name.endsWith(".tar.gz"));
     const asset = isLinux ? (linux || win) : (win || linux);
     if (asset) {
       const label = asset.name.endsWith(".exe") ? "🪟 Download for Windows" : "🐧 Download for Linux";

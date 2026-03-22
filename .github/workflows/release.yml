@@ -50,7 +50,11 @@ jobs:
           generate_release_notes: true
 
   build-linux:
-    runs-on: ubuntu-latest
+    # Build on ubuntu-20.04 (glibc 2.31) for maximum compatibility
+    # with older Linux distributions
+    runs-on: ubuntu-20.04
+    env:
+      LINUX_VERSION: "0.1.0"
 
     steps:
       - name: Checkout code
@@ -61,23 +65,27 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y binutils
+
       - name: Install PyInstaller
         run: pip install pyinstaller
 
       - name: Build luz
-        run: pyinstaller --onefile --name luz main.py
+        run: pyinstaller --onefile --clean --strip --name luz main.py
 
       - name: Build ray
-        run: pyinstaller --onefile --name ray ray.py
+        run: pyinstaller --onefile --clean --strip --name ray ray.py
 
       - name: Package binaries
         run: |
-          VERSION="${{ github.ref_name }}"
           mkdir -p luz-linux
           cp dist/luz dist/ray luz-linux/
-          tar -czf "luz-${VERSION}-linux.tar.gz" -C luz-linux .
+          tar -czf "luz-linux-${LINUX_VERSION}.tar.gz" -C luz-linux .
 
       - name: Upload Linux binaries to release
         uses: softprops/action-gh-release@v2
         with:
-          files: luz-${{ github.ref_name }}-linux.tar.gz
+          files: luz-linux-${{ env.LINUX_VERSION }}.tar.gz
