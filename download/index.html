@@ -1360,7 +1360,7 @@ fetch("https://api.github.com/repos/Elabsurdo984/luz-lang/releases/latest")
       document.getElementById("win-btn").href = win.browser_download_url;
       document.getElementById("win-info").textContent = win.name + " · No dependencies";
     }
-    const linux = data.assets.find(a => a.name.endsWith("-linux.tar.gz"));
+    const linux = data.assets.find(a => a.name.includes("linux") && a.name.endsWith(".tar.gz"));
     if (linux) {
       document.getElementById("linux-btn").href = linux.browser_download_url;
       document.getElementById("linux-info").textContent = linux.name + " · luz + ray binaries";
