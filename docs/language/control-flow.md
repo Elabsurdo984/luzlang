@@ -15,24 +15,36 @@ if x > 20 {
 ```
 
 - `elif` and `else` are optional.
-- There is no limit to the number of `elif` branches.
-- Braces `{ }` are always required, even for single-statement blocks.
+- Braces `{ }` are always required.
+
+## Ternary operator
+
+A compact inline conditional that returns a value:
+
+```
+label = "big" if x > 10 else "small"
+write(label)
+```
+
+Ternaries can be chained:
+
+```
+grade = "A" if score >= 90 else "B" if score >= 80 else "C"
+```
 
 ## while
-
-Repeats a block as long as the condition is true:
 
 ```
 i = 0
 while i < 5 {
     write(i)
-    i = i + 1
+    i += 1
 }
 ```
 
 ## for — range loop
 
-Iterates from `start` to `end` **inclusive**, incrementing by 1:
+Iterates from `start` to `end` **inclusive**:
 
 ```
 for i = 1 to 10 {
@@ -42,56 +54,66 @@ for i = 1 to 10 {
 
 ## for — for-each loop
 
-Iterates over the elements of a list, the characters of a string, or the keys of a dictionary:
+Iterates over lists, string characters, or dictionary keys:
 
 ```
-# List
 fruits = ["apple", "banana", "cherry"]
 for fruit in fruits {
     write(fruit)
 }
 
-# String (character by character)
 for ch in "hello" {
     write(ch)
 }
 
-# Dictionary (iterates over keys)
 for key in {"a": 1, "b": 2} {
     write(key)
 }
 ```
 
-## break
+## switch
 
-Exits the innermost loop immediately:
+Compares a value against multiple cases. Each case can match multiple values.
+
+```
+switch x {
+    case 1 { write("one") }
+    case 2, 3 { write("two or three") }
+    else { write("other") }
+}
+```
+
+- Cases are checked in order; only the first match runs.
+- `else` is optional and acts as the fallback.
+- The subject is compared with `==`.
+
+## match
+
+Like `switch` but is an **expression** — it returns a value.
+
+```
+label = match x {
+    0 => "zero"
+    1 => "one"
+    2, 3 => "two or three"
+    _ => "many"
+}
+```
+
+- `_` is the wildcard — matches anything and must be last.
+- Each arm is `pattern => expression`.
+- Multiple patterns per arm: `2, 3 => "two or three"`.
+
+## break / continue / pass
 
 ```
 for i = 1 to 10 {
-    if i == 5 { break }
+    if i == 5 { break }       # exit the loop
+    if i == 3 { continue }    # skip to next iteration
     write(i)
 }
-# prints 1 2 3 4
-```
 
-## continue
-
-Skips the rest of the current iteration and moves to the next:
-
-```
-for i = 1 to 10 {
-    if i == 3 { continue }
-    write(i)
-}
-# prints 1 2 4 5 6 7 8 9 10
-```
-
-## pass
-
-A no-op placeholder for empty blocks. Useful when a block is syntactically required but you have nothing to put in it yet:
-
-```
 if true {
-    pass
+    pass    # no-op placeholder
 }
 ```

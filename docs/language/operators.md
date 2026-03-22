@@ -12,18 +12,20 @@
 | `%` | Modulo | `10 % 3` | `1` |
 | `**` | Exponentiation (right-associative) | `2 ** 8` | `256` |
 
-### String operations
+## Compound assignment
 
-`+` concatenates two strings:
+| Operator | Equivalent |
+|---|---|
+| `x += n` | `x = x + n` |
+| `x -= n` | `x = x - n` |
+| `x *= n` | `x = x * n` |
+| `x /= n` | `x = x / n` |
 
 ```
-write("Hello" + ", " + "world!")   # Hello, world!
-```
-
-`*` repeats a string:
-
-```
-write("ha" * 3)   # hahaha
+total = 0
+total += 10
+total *= 2
+write(total)   # 20
 ```
 
 ## Comparison
@@ -37,14 +39,6 @@ write("ha" * 3)   # hahaha
 | `<=` | Less than or equal |
 | `>=` | Greater than or equal |
 
-Comparison operators return `true` or `false`.
-
-```
-write(5 == 5)    # true
-write(3 != 4)    # true
-write(10 > 20)   # false
-```
-
 ## Logical
 
 | Operator | Description |
@@ -53,10 +47,10 @@ write(10 > 20)   # false
 | `or` | True if at least one operand is true |
 | `not` | Negates a boolean |
 
+## Ternary
+
 ```
-write(true and false)   # false
-write(true or false)    # true
-write(not true)         # false
+result = "yes" if condition else "no"
 ```
 
 ## Operator precedence
@@ -71,11 +65,5 @@ From highest to lowest:
 not
 and
 or
-```
-
-Use parentheses to override precedence:
-
-```
-write(2 + 3 * 4)     # 14  (multiplication first)
-write((2 + 3) * 4)   # 20  (addition first)
+ternary (if … else)
 ```

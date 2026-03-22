@@ -2,7 +2,7 @@
 
 ## Lists
 
-A list is an ordered, mutable sequence of values. Mixed types are allowed.
+A list is an ordered, mutable sequence of values.
 
 ```
 fruits = ["apple", "banana", "cherry"]
@@ -12,18 +12,18 @@ empty  = []
 
 ### Indexing
 
-Zero-based. Reading out-of-range raises a `RuntimeFault`:
+Zero-based. Negative indices count from the end:
 
 ```
-write(fruits[0])   # apple
-write(fruits[2])   # cherry
+write(fruits[0])    # apple
+write(fruits[-1])   # cherry  (last element)
+write(fruits[-2])   # banana
 ```
 
 ### Assignment by index
 
 ```
 fruits[1] = "mango"
-write(fruits)   # ["apple", "mango", "cherry"]
 ```
 
 ### Iteration
@@ -39,17 +39,20 @@ for fruit in fruits {
 | Function | Description |
 |---|---|
 | `len(list)` | Number of elements |
-| `append(list, value)` | Add element to the end (modifies in place) |
+| `append(list, value)` | Add element to the end |
 | `pop(list)` | Remove and return the last element |
-| `pop(list, index)` | Remove and return the element at index |
+| `pop(list, index)` | Remove and return element at index |
+
+---
+
+## Strings
+
+Strings support indexing and negative indices:
 
 ```
-nums = [10, 20, 30]
-append(nums, 40)
-write(len(nums))     # 4
-write(pop(nums))     # 40
-write(pop(nums, 0))  # 10
-write(nums)          # [20, 30]
+s = "hello"
+write(s[0])    # h
+write(s[-1])   # o
 ```
 
 ---
@@ -60,19 +63,12 @@ A dictionary maps keys to values. Keys must be strings or numbers.
 
 ```
 person = {"name": "Alice", "age": 30}
-empty  = {}
 ```
 
-### Accessing values
+### Access and assignment
 
 ```
 write(person["name"])   # Alice
-write(person["age"])    # 30
-```
-
-### Assigning values
-
-```
 person["age"] = 31
 person["city"] = "Madrid"
 ```
@@ -95,10 +91,3 @@ for key in person {
 | `keys(dict)` | Returns a list of all keys |
 | `values(dict)` | Returns a list of all values |
 | `remove(dict, key)` | Remove key and return its value |
-
-```
-write(keys(person))      # ["name", "age", "city"]
-write(values(person))    # ["Alice", 31, "Madrid"]
-write(remove(person, "city"))   # Madrid
-write(len(person))       # 2
-```
