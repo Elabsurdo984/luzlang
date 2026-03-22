@@ -1,0 +1,47 @@
+name: Release Linux
+
+on:
+  push:
+    tags:
+      - "linux-v*"
+
+jobs:
+  build-linux:
+    # Build inside a Debian 11 (bullseye) container for glibc 2.31 compatibility
+    runs-on: ubuntu-22.04
+    container: python:3.11-slim-bullseye
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y binutils
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build luz
+        run: pyinstaller --onefile --clean --strip --name luz main.py
+
+      - name: Build ray
+        run: pyinstaller --onefile --clean --strip --name ray ray.py
+
+      - name: Package binaries
+        run: |
+          mkdir -p luz-linux/lib
+          cp dist/luz dist/ray luz-linux/
+          cp -r libs/luz-math luz-linux/lib/
+          cp -r libs/luz-random luz-linux/lib/
+          cp -r libs/luz-system luz-linux/lib/
+          cp -r libs/luz-io luz-linux/lib/
+          tar -czf "luz-${GITHUB_REF_NAME}.tar.gz" -C luz-linux .
+
+      - name: Create GitHub Release and upload Linux binaries
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Luz Linux ${{ github.ref_name }}"
+          files: luz-${{ github.ref_name }}.tar.gz
+          generate_release_notes: true

@@ -18,19 +18,27 @@
 </div>
 
 <script>
-fetch("https://api.github.com/repos/Elabsurdo984/luz-lang/releases/latest")
+const API = "https://api.github.com/repos/Elabsurdo984/luz-lang/releases";
+fetch(API)
   .then(r => r.json())
-  .then(data => {
-    if (!data.assets) return;
-    const win = data.assets.find(a => a.name.endsWith("-setup.exe"));
-    if (win) {
-      document.getElementById("win-btn").href = win.browser_download_url;
-      document.getElementById("win-info").textContent = win.name + " · No dependencies";
+  .then(releases => {
+    const winRelease = releases.find(r => r.tag_name.startsWith("win-v"));
+    const linuxRelease = releases.find(r => r.tag_name.startsWith("linux-v"));
+
+    if (winRelease) {
+      const asset = winRelease.assets.find(a => a.name.endsWith("-setup.exe"));
+      if (asset) {
+        document.getElementById("win-btn").href = asset.browser_download_url;
+        document.getElementById("win-info").textContent = winRelease.tag_name + " · No dependencies";
+      }
     }
-    const linux = data.assets.find(a => a.name.includes("linux") && a.name.endsWith(".tar.gz"));
-    if (linux) {
-      document.getElementById("linux-btn").href = linux.browser_download_url;
-      document.getElementById("linux-info").textContent = linux.name + " · luz + ray binaries";
+
+    if (linuxRelease) {
+      const asset = linuxRelease.assets.find(a => a.name.endsWith(".tar.gz"));
+      if (asset) {
+        document.getElementById("linux-btn").href = asset.browser_download_url;
+        document.getElementById("linux-info").textContent = linuxRelease.tag_name + " · luz + ray binaries";
+      }
     }
   });
 </script>
