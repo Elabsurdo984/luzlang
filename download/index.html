@@ -513,10 +513,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#whats-included" class="md-nav__link">
+  <a href="#windows-whats-included" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What's included
+        Windows — What's included
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linux-setup-after-download" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linux — Setup after download
       
     </span>
   </a>
@@ -528,17 +539,6 @@
     <span class="md-ellipsis">
       
         After installing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#other-platforms" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Other platforms
       
     </span>
   </a>
@@ -1269,10 +1269,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#whats-included" class="md-nav__link">
+  <a href="#windows-whats-included" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What's included
+        Windows — What's included
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linux-setup-after-download" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linux — Setup after download
       
     </span>
   </a>
@@ -1284,17 +1295,6 @@
     <span class="md-ellipsis">
       
         After installing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#other-platforms" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Other platforms
       
     </span>
   </a>
@@ -1333,46 +1333,58 @@
 
 
 <h1 id="download">Download<a class="headerlink" href="#download" title="Permanent link">&para;</a></h1>
-<div style="text-align: center; margin: 2rem 0;">
-  <a id="download-btn" href="https://github.com/Elabsurdo984/luz-lang/releases/latest"
-     style="background:#e65100;color:white;padding:14px 32px;border-radius:8px;font-size:1.1rem;font-weight:bold;text-decoration:none;">
-    Download for Windows
-  </a>
-  <p style="margin-top:1rem;color:#888;" id="download-info">Windows 10 or later · No dependencies</p>
+<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin:2rem 0;">
+  <div style="text-align:center;">
+    <a id="win-btn" href="https://github.com/Elabsurdo984/luz-lang/releases/latest"
+       style="display:inline-block;background:#e65100;color:white;padding:14px 32px;border-radius:8px;font-size:1.1rem;font-weight:bold;text-decoration:none;">
+      🪟 Download for Windows
+    </a>
+    <p style="margin-top:0.6rem;color:#888;font-size:0.9rem;" id="win-info">Installer · No dependencies</p>
+  </div>
+  <div style="text-align:center;">
+    <a id="linux-btn" href="https://github.com/Elabsurdo984/luz-lang/releases/latest"
+       style="display:inline-block;background:#37474f;color:white;padding:14px 32px;border-radius:8px;font-size:1.1rem;font-weight:bold;text-decoration:none;">
+      🐧 Download for Linux
+    </a>
+    <p style="margin-top:0.6rem;color:#888;font-size:0.9rem;" id="linux-info">tar.gz · luz + ray binaries</p>
+  </div>
 </div>
 
 <script>
 fetch("https://api.github.com/repos/Elabsurdo984/luz-lang/releases/latest")
   .then(r => r.json())
   .then(data => {
-    const asset = data.assets && data.assets.find(a => a.name.endsWith("-setup.exe"));
-    if (asset) {
-      document.getElementById("download-btn").href = asset.browser_download_url;
-      document.getElementById("download-info").innerHTML =
-        asset.name + " &nbsp;·&nbsp; Windows 10 or later &nbsp;·&nbsp; No dependencies";
+    if (!data.assets) return;
+    const win = data.assets.find(a => a.name.endsWith("-setup.exe"));
+    if (win) {
+      document.getElementById("win-btn").href = win.browser_download_url;
+      document.getElementById("win-info").textContent = win.name + " · No dependencies";
+    }
+    const linux = data.assets.find(a => a.name.endsWith("-linux.tar.gz"));
+    if (linux) {
+      document.getElementById("linux-btn").href = linux.browser_download_url;
+      document.getElementById("linux-info").textContent = linux.name + " · luz + ray binaries";
     }
   });
 </script>
 
-<h3 id="whats-included">What's included<a class="headerlink" href="#whats-included" title="Permanent link">&para;</a></h3>
+<h3 id="windows-whats-included">Windows — What's included<a class="headerlink" href="#windows-whats-included" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Full Luz interpreter as a standalone executable</li>
-<li><code>ray</code> package manager included</li>
+<li>Full Luz interpreter (<code>luz.exe</code>)</li>
+<li><code>ray</code> package manager (<code>ray.exe</code>)</li>
 <li><code>luz</code> and <code>ray</code> added to your system PATH automatically</li>
-<li>Standard libraries pre-installed</li>
+<li>Standard libraries pre-installed (<code>luz-math</code>, <code>luz-random</code>, <code>luz-io</code>, <code>luz-system</code>)</li>
 <li>No Python required</li>
 </ul>
-<h3 id="after-installing">After installing<a class="headerlink" href="#after-installing" title="Permanent link">&para;</a></h3>
-<p>Open a new terminal and run:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>luz<span class="w"> </span>program.luz<span class="w">   </span><span class="c1"># run a file</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>luz<span class="w">               </span><span class="c1"># open the interactive REPL</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>ray<span class="w"> </span>install<span class="w"> </span>user/package<span class="w">   </span><span class="c1"># install a package</span>
+<h3 id="linux-setup-after-download">Linux — Setup after download<a class="headerlink" href="#linux-setup-after-download" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>tar<span class="w"> </span>-xzf<span class="w"> </span>luz-*-linux.tar.gz
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>sudo<span class="w"> </span>mv<span class="w"> </span>luz<span class="w"> </span>ray<span class="w"> </span>/usr/local/bin/
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>luz<span class="w"> </span>program.luz
 </code></pre></div>
-<h3 id="other-platforms">Other platforms<a class="headerlink" href="#other-platforms" title="Permanent link">&para;</a></h3>
-<p>Linux and macOS builds are not available yet. You can run Luz from source:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Elabsurdo984/luz-lang.git
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>luz-lang
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>python<span class="w"> </span>main.py<span class="w"> </span>program.luz
+<h3 id="after-installing">After installing<a class="headerlink" href="#after-installing" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>luz<span class="w"> </span>program.luz<span class="w">        </span><span class="c1"># run a file</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>luz<span class="w">                    </span><span class="c1"># open the interactive REPL</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>ray<span class="w"> </span>install<span class="w"> </span>user/pkg<span class="w">   </span><span class="c1"># install a package</span>
 </code></pre></div>
 <hr />
 <h2 id="release-history">Release history<a class="headerlink" href="#release-history" title="Permanent link">&para;</a></h2>
@@ -1384,6 +1396,14 @@ fetch("https://api.github.com/repos/Elabsurdo984/luz-lang/releases/latest")
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><strong>v1.14.0</strong></td>
+<td>File I/O built-ins, luz-io library, luz-system library, Linux binary</td>
+</tr>
+<tr>
+<td><strong>v1.13.0</strong></td>
+<td>File I/O built-ins, luz-io library, ternary fix</td>
+</tr>
 <tr>
 <td><strong>v1.12.0</strong></td>
 <td>switch/match, variadic functions, default parameters, multiple return values, ternary operator</td>

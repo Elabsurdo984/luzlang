@@ -1445,20 +1445,25 @@
 <div style="text-align: center; margin: 1.5rem 0;">
   <a id="download-btn" href="https://github.com/Elabsurdo984/luz-lang/releases/latest"
      style="background:#e65100;color:white;padding:12px 28px;border-radius:8px;font-size:1rem;font-weight:bold;text-decoration:none;">
-    Download for Windows
+    Download
   </a>
-  <p style="margin-top:0.75rem;color:#888;font-size:0.9rem;" id="download-info">No Python required · Adds <code>luz</code> to your PATH</p>
+  <p style="margin-top:0.75rem;color:#888;font-size:0.9rem;" id="download-info">No Python required</p>
 </div>
 
 <script>
 fetch("https://api.github.com/repos/Elabsurdo984/luz-lang/releases/latest")
   .then(r => r.json())
   .then(data => {
-    const asset = data.assets && data.assets.find(a => a.name.endsWith("-setup.exe"));
+    if (!data.assets) return;
+    const isLinux = navigator.platform.toLowerCase().includes("linux");
+    const win = data.assets.find(a => a.name.endsWith("-setup.exe"));
+    const linux = data.assets.find(a => a.name.endsWith("-linux.tar.gz"));
+    const asset = isLinux ? (linux || win) : (win || linux);
     if (asset) {
+      const label = asset.name.endsWith(".exe") ? "🪟 Download for Windows" : "🐧 Download for Linux";
       document.getElementById("download-btn").href = asset.browser_download_url;
-      document.getElementById("download-info").innerHTML =
-        asset.name + " &nbsp;·&nbsp; No Python required &nbsp;·&nbsp; Adds <code>luz</code> to your PATH";
+      document.getElementById("download-btn").textContent = label;
+      document.getElementById("download-info").textContent = asset.name + " · No Python required";
     }
   });
 </script>
