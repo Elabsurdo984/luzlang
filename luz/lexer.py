@@ -112,7 +112,8 @@ class Lexer:
 
     # make_number() reads a sequence of digits and at most one decimal point,
     # then returns either an INT or FLOAT token depending on whether a '.' was
-    # found.  The line is captured before consumption so the token reports the
+    # found. Also handles scientific notation (e.g. 1e5, 2.5e-3, 1E10).
+    # The line is captured before consumption so the token reports the
     # line where the literal starts, not where it ends.
     def make_number(self):
         num_str = ''
@@ -127,6 +128,22 @@ class Lexer:
                 dot_count += 1
             num_str += self.current_char
             self.advance()
+
+        # Scientific notation: optional e/E followed by optional +/- and digits
+        if self.current_char in ('e', 'E'):
+            num_str += self.current_char
+            self.advance()
+            if self.current_char in ('+', '-'):
+                num_str += self.current_char
+                self.advance()
+            if self.current_char is None or not self.current_char.isdigit():
+                e = InvalidTokenFault("Expected digits after exponent in number literal")
+                e.line = line
+                raise e
+            while self.current_char is not None and self.current_char.isdigit():
+                num_str += self.current_char
+                self.advance()
+            return Token(TokenType.FLOAT, float(num_str), line)
 
         if dot_count == 0:
             return Token(TokenType.INT, int(num_str), line)
