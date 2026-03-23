@@ -1443,6 +1443,20 @@ class Interpreter:
                 return fn(self, args)
             raise InvalidUsageFault(f"Module attribute '{node.method_token.value}' is not callable")
 
+        # List method dot syntax: [1,2,3].append(4), list.pop(), etc.
+        if isinstance(obj, list):
+            method_name = node.method_token.value
+            list_methods = {
+                'append':   lambda: self.builtin_append(obj, args[0]),
+                'pop':      lambda: self.builtin_pop(obj, args[0] if args else None),
+                'len':      lambda: self.builtin_len(obj),
+                'contains': lambda: args[0] in obj,
+                'join':     lambda: self.builtin_join(args[0], obj),
+            }
+            if method_name in list_methods:
+                return list_methods[method_name]()
+            raise InvalidUsageFault(f"List has no method '{method_name}'")
+
         if not isinstance(obj, LuzInstance):
             raise InvalidUsageFault(f"Cannot call method on non-instance value '{obj}'")
 

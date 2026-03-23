@@ -256,6 +256,22 @@ class TestCollections:
         assert val("null ?? 42") == 42
         assert val("10 ?? 42") == 10
 
+    def test_list_dot_append(self):
+        assert env("l = [1, 2]\nl.append(3)", "l") == [1, 2, 3]
+
+    def test_list_dot_pop(self):
+        assert env("l = [1, 2, 3]\nv = l.pop()", "v") == 3
+
+    def test_list_dot_len(self):
+        assert env("l = [1, 2, 3]\nv = l.len()", "v") == 3
+
+    def test_list_dot_contains(self):
+        assert env("l = [1, 2, 3]\nv = l.contains(2)", "v") == True
+        assert env("l = [1, 2, 3]\nv = l.contains(99)", "v") == False
+
+    def test_list_dot_join(self):
+        assert env('l = ["a", "b", "c"]\nv = l.join(", ")', "v") == "a, b, c"
+
 
 # ── OOP ───────────────────────────────────────────────────────────────────────
 
