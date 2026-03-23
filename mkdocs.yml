@@ -99,3 +99,4 @@ nav:
       - luz-clock: stdlib/clock.md
   - Ray Package Manager: ray.md
   - Architecture: architecture.md
+  - Versioning: versioning.md
