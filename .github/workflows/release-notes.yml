@@ -1,0 +1,40 @@
+name: Release Notes
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release-notes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          BODY=$(awk '/^## \['"$VERSION"'\]/{found=1; next} found && /^## \[/{exit} found{print}' CHANGELOG.md | sed '/^[[:space:]]*$/d;/^---$/d' | sed '1{/^$/d}')
+          if [ -z "$BODY" ]; then
+            echo "has_body=false" >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo "has_body=true"
+              echo "body<<EOF"
+              echo "$BODY"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create release with changelog body
+        if: steps.changelog.outputs.has_body == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.changelog.outputs.body }}
+
+      - name: Create release without body
+        if: steps.changelog.outputs.has_body == 'false'
+        uses: softprops/action-gh-release@v2
