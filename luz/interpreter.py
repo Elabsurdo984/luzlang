@@ -1463,6 +1463,8 @@ class Interpreter:
             return "list"
         if isinstance(value, dict):
             return "dict"
+        if isinstance(value, LuzModule):
+            return "module"
         return "unknown"
 
     # instanceof() returns true if value is an instance of the given class or
