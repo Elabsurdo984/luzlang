@@ -19,3 +19,6 @@ site/
 # VS Code extension build
 vscode-luz/node_modules/
 vscode-luz/out/
+
+# Private roadmap (local only)
+roadmap/

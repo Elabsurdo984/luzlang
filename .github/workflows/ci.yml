@@ -39,3 +39,9 @@ jobs:
           python main.py examples/08_primes.luz
           python main.py examples/09_collections.luz
           python main.py examples/10_error_handling.luz
+          python main.py examples/16_closures.luz
+          python main.py examples/17_lambdas.luz
+          python main.py examples/18_bound_methods.luz
+          python main.py examples/19_dot_methods.luz
+          python main.py examples/20_data_structures.luz
+          python main.py examples/21_algorithms.luz
