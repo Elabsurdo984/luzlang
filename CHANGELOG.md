@@ -5,14 +5,18 @@ Format: `## [version] - YYYY-MM-DD` followed by categorized entries.
 
 ---
 
-## [1.16.0] - 2026-03-23
+## [1.16.0] - 2026-03-24
 
 ### Added
 - Bound methods: retrieving a method from an instance (`m = obj.method`) now returns a bound method that carries `self` automatically — calling `m()` no longer requires passing the instance manually
+- String dot method syntax: `str.uppercase()`, `str.lowercase()`, `str.trim()`, `str.swap(old, new)`, `str.split(sep)`
 - List dot method syntax: `list.append(x)`, `list.pop()`, `list.len()`, `list.contains(x)`, `list.join(sep)`
-- String dot method syntax: `str.uppercase()`, `str.lowercase()`, `str.trim()`, `str.swap(old, new)`, `str.split(sep)` *(pending merge of PR #16)*
 - Versioning policy documentation (`docs/versioning.md`)
 - Automated release notes: tagging `vX.Y.Z` now extracts the matching changelog entry and sets it as the GitHub release body
+
+### Fixed
+- `self.attr[i]` now correctly indexes into instance attributes — previously the index was silently ignored and the full attribute was returned
+- Lists, dicts, booleans, and `null` now print in Luz syntax (`"hello"`, `true`, `null`) instead of Python syntax (`'hello'`, `True`, `None`)
 
 ---
 
