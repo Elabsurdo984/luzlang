@@ -23,14 +23,16 @@ for i = 1 to 5 {
 - **Ternary operator** — `value if condition else other`
 - **Functions** — default parameters, variadic (`...args`), multiple return values, closures
 - **Lambdas** — `fn(x) => x * 2` and `fn(x) { body }` as first-class values
+- **Dot method syntax** — `"hello".uppercase()`, `list.append(x)`, `list.contains(x)`
+- **Bound methods** — `m = obj.method` stores the method with `self` already bound
 - **Compound assignment** — `+=`, `-=`, `*=`, `/=`
 - **Destructuring assignment** — `x, y = func()`
 - **Negative indexing** — `list[-1]`, `str[-2]`
 - **Object-oriented programming** — classes, inheritance (`extends`), method overriding, `super`
-- **Error handling** — `attempt / rescue` blocks and `alert`
-- **Modules** — `import` other `.luz` files
+- **Error handling** — `attempt / rescue / finally` blocks and `alert`
+- **Modules** — `import`, `from "x" import name`, `import "x" as alias`
 - **Package manager** — [Ray](#package-manager-ray), installs packages from GitHub
-- **Standard library** — `luz-math` and `luz-random` included out of the box
+- **Standard library** — `luz-math`, `luz-random`, `luz-io`, `luz-system`, `luz-clock`
 - **Helpful errors** — every error includes the line number
 - **REPL** — interactive shell for quick experimentation
 - **VS Code extension** — syntax highlighting, autocompletion, error detection, hover docs, snippets
@@ -89,6 +91,34 @@ switch lo {
 result = match hi {
     8 => "eight"
     _ => "something else"
+}
+
+# Dot method syntax — strings and lists
+words = "hello world".split(" ")   # ["hello", "world"]
+words.append("!")
+write(words.join(", "))            # hello, world, !
+write(words.contains("hello"))     # true
+
+# Object-oriented programming + bound methods
+class Counter {
+    function init(self) { self.n = 0 }
+    function inc(self)  { self.n += 1 }
+    function get(self)  { return self.n }
+}
+
+c = Counter()
+step = c.inc          # bound method — self already attached
+step()
+step()
+write(c.get())        # 2
+
+# Error handling
+attempt {
+    result = 10 / 0
+} rescue (e) {
+    write($"Caught: {e}")
+} finally {
+    write("done")
 }
 ```
 
