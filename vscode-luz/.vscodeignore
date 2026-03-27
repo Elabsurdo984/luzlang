@@ -1,9 +1,0 @@
-.vscode/**
-node_modules/**
-src/**
-build/**
-dist/**
-out/extension.js.map
-tsconfig.json
-*.vsix
-luz.spec
