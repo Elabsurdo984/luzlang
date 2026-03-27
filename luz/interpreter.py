@@ -602,11 +602,7 @@ class Interpreter:
     # _luz_str() converts any Luz value to its display string, using Luz
     # conventions (null, true/false) rather than Python's (None, True/False).
     def _luz_str(self, value):
-        if value is None:
-            return 'null'
-        if isinstance(value, bool):
-            return 'true' if value else 'false'
-        return str(value)
+        return self.luz_display(value)
 
     def visit_ListNode(self, node):
         # Evaluate every element expression and collect the results into a Python list.
