@@ -171,12 +171,16 @@ class LuzFunction:
         for i in range(fixed):
             name = self.node.arg_tokens[i].value
             if i < len(arguments):
-                env.define(name, arguments[i])
+                value = arguments[i]
             elif name in kwargs:
-                env.define(name, kwargs[name])
+                value = kwargs[name]
             else:
-                default_val = interpreter.visit(self.node.defaults[i])
-                env.define(name, default_val)
+                value = interpreter.visit(self.node.defaults[i])
+            type_ann = self.node.arg_types[i]
+            if type_ann is not None and not Interpreter._check_type(value, type_ann):
+                raise TypeViolationFault(f"Argument '{name}' expects type '{type_ann}', "
+                                         f"got '{Interpreter._luz_type_name(value)}'")
+            env.define(name, value)
         if variadic:
             env.define(self.node.arg_tokens[fixed].value, list(arguments[fixed:]))
 
@@ -189,7 +193,13 @@ class LuzFunction:
         try:
             interpreter.execute_block(self.node.block, env)
         except ReturnException as e:
-            return e.value
+            ret = e.value
+            if self.node.return_type is not None and not Interpreter._check_type(ret, self.node.return_type):
+                raise TypeViolationFault(f"Function '{self.node.name_token.value}' must return '{self.node.return_type}', "
+                                         f"got '{Interpreter._luz_type_name(ret)}'")
+            return ret
+        if self.node.return_type is not None and self.node.return_type != 'null':
+            raise TypeViolationFault(f"Function '{self.node.name_token.value}' must return '{self.node.return_type}', got 'null'")
         return None
 
 
@@ -1281,6 +1291,42 @@ class Interpreter:
         if isinstance(val, str):
             return val
         return Interpreter.luz_repr(val)
+    
+    @staticmethod
+    def _check_type(value, type_name):
+        if type_name == 'int':
+            return isinstance(value, int) and not isinstance(value, bool)
+        if type_name == 'float':
+            return isinstance(value, float)
+        if type_name == 'number':
+            return isinstance(value, (int, float)) and not isinstance(value, bool)
+        if type_name == 'string':
+            return isinstance(value, str)
+        if type_name == 'bool':
+            return isinstance(value, bool)
+        if type_name == 'list':
+            return isinstance(value, list)
+        if type_name == 'dict':
+            return isinstance(value, dict)
+        if type_name == 'null':
+            return value is None
+        # Class name - check instance and its class name
+        if isinstance(value, LuzInstance):
+            return value.luz_class.name == type_name
+        return False
+    
+    @staticmethod
+    def _luz_type_name(value):
+        if value is None: return 'null'
+        if isinstance(value, bool): return 'bool'
+        if isinstance(value, float): return 'float'
+        if isinstance(value, int): return 'int'
+        if isinstance(value, str): return 'string'
+        if isinstance(value, dict): return 'dict'
+        if isinstance(value, list): return 'list'
+        if isinstance(value, LuzInstance): return value.luz_class.name
+        return type(value).__name__
+    
 
     # write() is the standard output function.  Booleans are displayed as
     # lowercase "true"/"false" (matching Luz syntax) rather than Python's
