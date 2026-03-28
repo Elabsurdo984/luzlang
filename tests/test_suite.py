@@ -14,7 +14,7 @@ from luz.interpreter import Interpreter
 from luz.exceptions import (
     ArityFault, TypeViolationFault, ZeroDivisionFault, IndexFault,
     UndefinedSymbolFault, InvalidUsageFault, ImportFault, UserFault,
-    InheritanceFault
+    InheritanceFault, TypeClashFault
 )
 
 
@@ -520,6 +520,57 @@ class TestBuiltinIndexInsert:
     def test_insert_non_int_index_raises(self):
         with pytest.raises(Exception):
             val('xs = [1]\ninsert(xs, "a", 99)')
+
+
+# ── reverse, any, all builtins ────────────────────────────────────────────────
+
+class TestBuiltinsReverseAnyAll:
+    def test_reverse_list(self):
+        assert val("reverse([1, 2, 3])") == [3, 2, 1]
+
+    def test_reverse_string(self):
+        assert val('reverse("hello")') == "olleh"
+
+    def test_reverse_empty_list(self):
+        assert val("reverse([])") == []
+
+    def test_reverse_empty_string(self):
+        assert val('reverse("")') == ""
+
+    def test_reverse_original_unchanged(self):
+        interp = run('nums = [1, 2, 3]\nrev = reverse(nums)')
+        assert interp.global_env.lookup("nums") == [1, 2, 3]
+        assert interp.global_env.lookup("rev") == [3, 2, 1]
+
+    def test_reverse_invalid_type(self):
+        with pytest.raises(TypeClashFault):
+            val("reverse(42)")
+
+    def test_any_true(self):
+        assert val("any([false, false, true])") is True
+
+    def test_any_false(self):
+        assert val("any([false, false, false])") is False
+
+    def test_any_empty(self):
+        assert val("any([])") is False
+
+    def test_any_invalid_type(self):
+        with pytest.raises(TypeClashFault):
+            val('any("hello")')
+
+    def test_all_true(self):
+        assert val("all([true, true, true])") is True
+
+    def test_all_false(self):
+        assert val("all([true, false, true])") is False
+
+    def test_all_empty(self):
+        assert val("all([])") is True
+
+    def test_all_invalid_type(self):
+        with pytest.raises(TypeClashFault):
+            val('all("hello")')
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

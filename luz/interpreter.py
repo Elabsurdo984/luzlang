@@ -380,6 +380,9 @@ class Interpreter:
             'len': self.builtin_len,
             'append': self.builtin_append,
             'pop': self.builtin_pop,
+            'reverse': self.builtin_reverse,
+            'any': self.builtin_any,
+            'all': self.builtin_all,
             'keys': self.builtin_keys,
             'values': self.builtin_values,
             'remove': self.builtin_remove,
@@ -1373,6 +1376,29 @@ class Interpreter:
             return list_obj.pop(index)
         except IndexError:
             raise IndexFault("Index out of range in pop() operation")
+
+    def builtin_reverse(self, value):
+        """Return a reversed copy of a list or string"""
+        if isinstance(value, list):
+            return list(reversed(value))
+        elif isinstance(value, str):
+            return value[::-1]
+        else:
+            raise TypeClashFault(
+                f"reverse() expects a list or string, got '{type(value).__name__}'"
+            )
+
+    def builtin_any(self, lst):
+        """Return True if at least one element is truthy"""
+        if not isinstance(lst, list):
+            raise TypeClashFault("any() requires a list")
+        return any(lst)
+
+    def builtin_all(self, lst):
+        """Return True if every element is truthy (True for empty list)"""
+        if not isinstance(lst, list):
+            raise TypeClashFault("all() requires a list")
+        return all(lst)
 
     def builtin_keys(self, dict_obj):
         if not isinstance(dict_obj, dict):
