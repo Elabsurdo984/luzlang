@@ -58,7 +58,8 @@ import difflib
 # new local variable rather than modifying the caller's variable.
 class Environment:
     def __init__(self, parent=None, is_function_scope=False):
-        self.records = {}             # Maps variable name → current value
+        self.records = {}
+        self.types = {}             # Maps variable name → current value
         self.parent = parent          # Enclosing scope (None for global)
         self.is_function_scope = is_function_scope
 
@@ -67,6 +68,11 @@ class Environment:
     # binding function parameters.
     def define(self, name, value):
         self.records[name] = value
+        return value
+    
+    def define_types(self, name, value, type_name):
+        self.records[name] = value
+        self.types[name] = type_name
         return value
 
     # lookup() searches the scope chain upward until it finds the name or
@@ -101,6 +107,12 @@ class Environment:
     #      here so it stays local to the function.
     def assign(self, name, value):
         if name in self.records:
+            if name in self.types:
+                from .interpreter import Interpreter
+                type_name = self.types[name]
+                if not Interpreter._check_type(value, type_name):
+                    raise TypeViolationFault(f"Variable '{name}' expects type '{type_name}', "
+                                             f"got '{Interpreter._luz_type_name(value)}'")
             self.records[name] = value
             return value
         # Walk up only if we haven't hit a function boundary AND the name
