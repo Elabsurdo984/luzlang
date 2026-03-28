@@ -540,6 +540,13 @@ class Parser:
                             break
                     self.advance()  # Consume '='
                     rhs = self.expr()
+                    if self.current_token.type == TokenType.COMMA:
+                        element = [rhs]
+                        while self.current_token.type == TokenType.COMMA:
+                            self.advance()
+                            element.append(self.expr())
+                        rhs = TupleNode(element)
+                        rhs.line = line; rhs.col = col
                     node = DestructureAssignNode(var_tokens, rhs); node.line = line; node.col = col
                     return node
 
