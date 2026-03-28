@@ -169,6 +169,12 @@ class VarAssignNode:
         self.value_node = value_node
     def __repr__(self): return f"({self.var_name_token.value} = {self.value_node})"
 
+class TypedVarAssignNode:
+    def __init__(self, var_token, type_name, value_node):
+        self.var_token = var_token
+        self.type_name = type_name
+        self.value_node = value_node
+
 # Represents a binary operation: left op right  (e.g. a + b, x == y)
 class BinOpNode:
     def __init__(self, left_node, op_token, right_node):
@@ -551,6 +557,22 @@ class Parser:
                         rhs.line = line; rhs.col = col
                     node = DestructureAssignNode(var_tokens, rhs); node.line = line; node.col = col
                     return node
+
+            if next_token and next_token.type == TokenType.COLON:
+                type_tok = self.tokens[self.pos + 2] if self.pos + 2 < len(self.tokens) else None
+                assign_tok = self.tokens[self.pos + 3] if self.pos + 3 < len(self.tokens) else None
+                if (type_tok and type_tok.type in (TokenType.IDENTIFIER, TokenType.NULL) and assign_tok and assign_tok.type == TokenType.ASSIGN):
+                    var_token = self.current_token
+                    self.advance()
+                    self.advance()
+                    type_name = 'null' if self.current_token.type == TokenType.NULL else self.current_token.value
+                    self.advance()
+                    self.advance()
+                    value = self.expr()
+                    node = TypedVarAssignNode(var_token, type_name, value)
+                    node.line = var_token.line; node.col = var_token.col
+                    return node
+                
 
             # One-token lookahead: if the token after the identifier is '=' or
             # a compound assignment operator, handle it before entering expr().
